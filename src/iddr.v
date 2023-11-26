@@ -4,7 +4,6 @@ module iddr #(
     parameter DATA_WIDTH = 8
 ) (
     input                     clk,
-    input                     rst,
     input  [DATA_WIDTH - 1:0] d  ,
 
     output [DATA_WIDTH - 1:0] q1 ,
