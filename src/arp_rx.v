@@ -2,6 +2,8 @@ module arp_rx (
     input         clk              ,
     input         rst              ,
 
+    input  [31:0] cfg_ip           ,
+
     input  [47:0] s_mac_src_mac    ,
     input  [47:0] s_mac_dst_mac    ,
     input  [15:0] s_mac_op_len     ,
@@ -43,6 +45,9 @@ reg [47:0] src_mac;
 reg [47:0] dst_mac;
 reg [31:0] src_ip;
 reg [31:0] dst_ip;
+
+reg req;
+reg resp;
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
@@ -152,6 +157,46 @@ always @(posedge clk ) begin
         dst_ip <= 32'd0;
     end
 end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        req <= 1'b0;
+    end
+    else begin
+        if((cnt == 6'd28) && (req == 1'b0) && (dst_ip == cfg_ip) && (op == 16'd1))begin
+            req <= 1'b1;
+        end
+        else if((req_ready == 1'b1) || (cnt == 6'd1))begin
+            req <= 1'b0;
+        end
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        resp <= 1'b0;
+    end
+    else begin
+        if((cnt == 6'd28) && (req == 1'b0) && (dst_ip == cfg_ip) && (op == 16'd2))begin
+            resp <= 1'b1;
+        end
+        else if((resp_ready == 1'b1) || (cnt == 6'd1))begin
+            resp <= 1'b0;
+        end
+    end
+end
+
+assign req_arp     = req    ;
+assign req_src_mac = src_mac;
+assign req_dst_mac = dst_mac;
+assign req_src_ip  = src_ip ;
+assign req_dst_ip  = dst_ip ;
+
+assign resp_arp     = resp   ;
+assign resp_src_mac = src_mac;
+assign resp_dst_mac = dst_mac;
+assign resp_src_ip  = src_ip ;
+assign resp_dst_ip  = dst_ip ;
 
     
 endmodule
