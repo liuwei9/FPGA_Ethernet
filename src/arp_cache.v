@@ -1,4 +1,7 @@
-module arp_cache (
+module arp_cache #(
+    parameter FLUSH_TIME = 32'hFFFF_FFFF,
+    parameter USE_FLUSH  = "TRUE"
+) (
     input         clk    ,
     input         rst    ,
     input         w_valid,
@@ -7,7 +10,8 @@ module arp_cache (
     input         r_valid,
     input  [31:0] rip    ,
     output [47:0] rmac   ,
-    output [ 1:0] hit     //01-->hit 10-->miss 
+    output [ 1:0] hit    , //01-->hit 10-->miss 
+    output        ready   
 );
 
 wire [7:0] hash_w;
@@ -27,8 +31,10 @@ wire ren;
 wire ren_re;
 reg  ren_ff;
 reg  ren_re_ff;
-reg [7:0] w_addr;
+wire [7:0] w_addr;
 reg [7:0] r_addr;
+wire [31:0] w_ip;
+wire [47:0] w_mac;
 
 wire [31:0] r_ip ;
 wire [47:0] r_mac;
@@ -38,6 +44,57 @@ reg  [47:0] r_mac_re;
 
 reg  [ 1:0] hit_r  ;
 reg  [47:0] hit_mac;
+
+generate
+    if(USE_FLUSH == "TRUE")begin        
+        wire flush;
+        reg [31:0] cnt;
+        reg [ 7:0] cnt1;
+        
+        always @(posedge clk ) begin
+            if(rst == 1'b1)begin
+                cnt <= 32'd0;
+            end
+            else begin
+                if(cnt == FLUSH_TIME)begin
+                    if(cnt1 == 8'hFF)begin
+                        cnt <=  32'd0;
+                    end
+                end
+                else begin
+                    cnt <= cnt + 1'b1;
+                end
+            end
+        end
+
+        always @(posedge clk ) begin
+            if(rst == 1'b1)begin
+                cnt1 <= 8'd0;
+            end
+            else if(cnt == FLUSH_TIME)begin
+                cnt1 <= cnt1 + 8'd1;
+            end
+            else begin
+                cnt1 <= 8'd0;
+            end
+        end
+        assign ready  = cnt != FLUSH_TIME;
+        assign w_ip   = cnt != FLUSH_TIME ? wip_ff[3]  : 32'd0;
+        assign w_mac  = cnt != FLUSH_TIME ? wmac_ff[3] : 48'd0;
+        assign w_addr = cnt != FLUSH_TIME ? hash_w : cnt1;
+        assign wen =    cnt != FLUSH_TIM  ? Ew_valid_ff[3] : 1'b1;
+
+    end
+    else begin
+        assign ready = 1'b1;
+        assign w_ip  = wip_ff[3] ;
+        assign w_mac = wmac_ff[3];
+        assign w_addr = hash_w;
+        assign wen = w_valid_ff[3];
+    end
+endgenerate
+
+
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
@@ -75,7 +132,6 @@ generate
     end
 endgenerate
 
-assign wen = w_valid_ff[3];
 assign ren = r_valid_ff[3] && ((!w_valid_ff[3]) || ((w_valid_ff[3] == 1'b1) && (hash_r != hash_w)));
 assign ren_re = r_valid_ff[3] && ((w_valid_ff[3] == 1'b1) && (hash_r == hash_w));
 
@@ -150,8 +206,8 @@ DJBHash DJBHash_inst_r(
 
 always @(posedge clk ) begin
     if(wen == 1'b1)begin
-       ip_mem[hash_w]  <= wip_ff[3] ;
-       mac_mem[hash_w] <= wmac_ff[3];
+       ip_mem[w_addr]  <= w_ip ;
+       mac_mem[w_addr] <= w_mac;
     end
 end
 
