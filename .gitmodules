@@ -1,0 +1,3 @@
+[submodule "src/hash/cpp/googleCityHash"]
+	path = src/hash/cpp/googleCityHash
+	url = git@github.com:google/cityhash.git
