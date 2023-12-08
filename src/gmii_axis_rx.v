@@ -65,9 +65,9 @@ generate
             .CDC_SYNC_STAGES(2),            // DECIMAL
             .CLOCKING_MODE("independent_clock"), // String
             .ECC_MODE("no_ecc"),            // String
-            .FIFO_DEPTH(16),              // DECIMAL
-            .FIFO_MEMORY_TYPE("distributed"),      // String
-            .PACKET_FIFO("false"),          // String
+            .FIFO_DEPTH(4096),              // DECIMAL
+            .FIFO_MEMORY_TYPE("block"),      // String
+            .PACKET_FIFO("true"),          // String
             .PROG_EMPTY_THRESH(10),         // DECIMAL
             .PROG_FULL_THRESH(10),          // DECIMAL
             .RD_DATA_COUNT_WIDTH(8),        // DECIMAL
