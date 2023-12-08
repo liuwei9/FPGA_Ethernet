@@ -69,7 +69,7 @@ always @(*) begin
             end
         end 
         DATA: begin
-            if(((s_mac_axis_last_ff == 1'b1) && (s_mac_axis_valid_ff == 1'b1)) || (s_mac_axis_error_ff == 1'b1) || (s_mac_axis_valid_ff == 1'b0))begin
+            if(((s_mac_axis_last_ff == 1'b1) && (s_mac_axis_valid_ff == 1'b1)) || (s_mac_axis_error_ff == 1'b1))begin
                 next_state = IDLE;
             end
             else begin

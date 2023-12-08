@@ -73,7 +73,7 @@ always @(*) begin
             end
         end
         DATA: begin
-            if((s_eth_axis_valid == 1'b0) || ((cnt == 11'd13) && (dst_mac != cfg_mac)))begin
+            if(((cnt == 11'd13) && (dst_mac != cfg_mac)))begin
                 next_state = IDLE;
             end
             else if(((s_eth_axis_last == 1'b1) && (s_eth_axis_valid == 1'b1)))begin
@@ -198,7 +198,7 @@ always @(posedge clk) begin
         error <= 1'b0;
     end
     else begin
-        error <= s_eth_axis_error | ((curr_state == DATA) && (s_eth_axis_valid == 1'b0));
+        error <= s_eth_axis_error;
     end
 end
 
