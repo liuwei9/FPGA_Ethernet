@@ -229,7 +229,7 @@ always @(posedge clk ) begin
     else begin
         if(query_curr_state == QUERY_TX)begin
             arp_tx_r_valid <= 1'b1 ;
-            arp_tx_r_mac   <= 48'd0;
+            arp_tx_r_mac   <= 48'hFFFF_FFFF_FFFF;
             arp_tx_r_ip    <= query_ip_ff;
             arp_tx_r_op    <= 2'b1 ;
         end
