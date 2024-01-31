@@ -269,7 +269,7 @@ assign arp_rx_req_ready  = query_curr_state != QUERY_TX;
 assign arp_tx_valid      = arp_tx_r_valid;
 assign arp_tx_mac        = arp_tx_r_mac;
 assign arp_tx_ip         = arp_tx_r_ip;
-assign arp_tx_op         = arp_tx_op;
+assign arp_tx_op         = arp_tx_r_op;
 
 arp_cache #(
     .FLUSH_TIME (FLUSH_TIME),
