@@ -8,8 +8,7 @@ module crc(
     input  [7:0]  crc_data_in ,
     input         crc_en      ,
     input         crc_clr     ,
-    output [31:0] crc_out     ,
-    output [31:0] crc_out_next
+    output [31:0] crc_out     
 
 );
 
