@@ -17,16 +17,19 @@ module arp_tx (
     output [ 7:0] m_mac_axis_data  ,
     output        m_mac_axis_valid ,
     input         m_mac_axis_ready ,
-    output        m_mac_axis_last  
+    output        m_mac_axis_last  ,
+    input         m_mac_axis_grant ,
+    output        m_mac_axis_req   
 
 );
 
-localparam IDLE = 3'b001;
-localparam SEND = 3'b010;
-localparam LAST = 3'b100; 
+localparam IDLE = 3'b0001;
+localparam REQ  = 4'b0010;
+localparam SEND = 3'b0100;
+localparam LAST = 3'b1000; 
 
-reg [2:0] curr_state;
-reg [2:0] next_state;
+reg [3:0] curr_state;
+reg [3:0] next_state;
 
 
 reg [47:0] m_mac_src_mac_r;
@@ -50,6 +53,7 @@ reg [31:0] dst_ip;
 reg [31:0] dst_ip_reg;
 
 reg arp_tx_ready_r;
+reg req_r;
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
@@ -63,13 +67,21 @@ end
 always @(*) begin
     case (curr_state)
         IDLE: begin
-            if((m_mac_axis_ready == 1'b1) && (arp_tx_valid == 1'b1))begin
-                next_state = SEND;
+            if(arp_tx_valid == 1'b1)begin
+                next_state = REQ;
             end
             else begin
                 next_state = IDLE;
             end
         end 
+        REQ: begin
+            if((m_mac_axis_req == 1'b1) && (m_mac_axis_grant == 1'b1))begin
+                next_state = SEND;
+            end
+            else begin
+                next_state = REQ;
+            end
+        end
         SEND: begin
             if(cnt == 5'd45)begin
                 next_state = LAST;
@@ -188,11 +200,27 @@ always @(posedge clk ) begin
         arp_tx_ready_r <= 1'b0;
     end
     else begin
-        if((curr_state == IDLE) && (m_mac_axis_ready == 1'b1))begin
+        if(curr_state == IDLE)begin
             arp_tx_ready_r <= 1'b1;
         end
         else begin
             arp_tx_ready_r <= 1'b0;
+        end
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        req_r <= 1'b0;
+    end
+    else begin
+        if((curr_state == IDLE) && (next_state == REQ))begin
+            req_r <= 1'b1;
+        end
+        else begin
+            if((req_r == 1'b1) && (m_mac_axis_grant == 1'b1))begin
+                req_r <= 1'b0;
+            end
         end
     end
 end
@@ -205,5 +233,6 @@ assign m_mac_axis_valid = axis_valid;
 assign m_mac_axis_last  = axis_last ;
 
 assign arp_tx_ready = arp_tx_ready_r;
+assign m_mac_axis_req = req_r;
     
 endmodule

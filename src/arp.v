@@ -31,7 +31,9 @@ module arp #(
     output [ 7:0] m_mac_axis_data ,
     output        m_mac_axis_valid,
     input         m_mac_axis_ready,
-    output        m_mac_axis_last 
+    output        m_mac_axis_last ,
+    input         m_mac_axis_grant,
+    output        m_mac_axis_req  
 );
 
 wire        arp_rx_req_ready        ;
@@ -140,7 +142,9 @@ arp_tx arp_tx_inst(
     .m_mac_axis_data   (m_mac_axis_data ),
     .m_mac_axis_valid  (m_mac_axis_valid),
     .m_mac_axis_ready  (m_mac_axis_ready),
-    .m_mac_axis_last   (m_mac_axis_last )
+    .m_mac_axis_last   (m_mac_axis_last ),
+    .m_mac_axis_grant  (m_mac_axis_grant),
+    .m_mac_axis_req    (m_mac_axis_req  )
 
 );
     
