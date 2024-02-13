@@ -23,13 +23,14 @@ module arp_tx (
 
 );
 
-localparam IDLE = 3'b0001;
-localparam REQ  = 4'b0010;
-localparam SEND = 3'b0100;
-localparam LAST = 3'b1000; 
+localparam IDLE = 5'b00001;
+localparam REQ  = 5'b00010;
+localparam REDY = 5'b00100;
+localparam SEND = 5'b01000;
+localparam LAST = 5'b10000; 
 
-reg [3:0] curr_state;
-reg [3:0] next_state;
+reg [4:0] curr_state;
+reg [4:0] next_state;
 
 
 reg [47:0] m_mac_src_mac_r;
@@ -76,10 +77,18 @@ always @(*) begin
         end 
         REQ: begin
             if((m_mac_axis_req == 1'b1) && (m_mac_axis_grant == 1'b1))begin
-                next_state = SEND;
+                next_state = REDY;
             end
             else begin
                 next_state = REQ;
+            end
+        end
+        REDY: begin
+            if(m_mac_axis_ready == 1'b1)begin
+                next_state = SEND;
+            end
+            else begin
+                next_state = REDY;
             end
         end
         SEND: begin
