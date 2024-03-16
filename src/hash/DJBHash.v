@@ -6,7 +6,7 @@ module DJBHash (
 );
 
 localparam MAGIC = 32'd5381;
-localparam PIPE_F = (MAGIC << 32'd5) + MAGIC
+localparam PIPE_F = (MAGIC << 32'd5) + MAGIC;
 
 reg [31:0] data_in_ff[3:0];
 reg [7:0] pipe [2:0];

@@ -33,7 +33,7 @@ module eth_tx_ctrl (
 localparam REQ_NUM = 2;
 
 localparam IDLE  = 4'b0001;
-localparam GRANT = 4'b0010
+localparam GRANT = 4'b0010;
 localparam ARP   = 4'b0100;
 localparam IP    = 4'b1000;
 
@@ -131,19 +131,23 @@ always @(posedge clk ) begin
     end
 end
 
+assign s_arp_mac_axis_ready = s_arp_mac_axis_ready_r;
+
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
-        s_ip_mac_axis_ready <= 1'b0;
+        s_ip_mac_axis_ready_r <= 1'b0;
     end
     else begin
         if(curr_state == IP)begin
-            s_ip_mac_axis_ready <= m_arp_mac_axis_ready;
+            s_ip_mac_axis_ready_r <= m_arp_mac_axis_ready;
         end
         else begin
-            s_ip_mac_axis_ready <= 1'b0;
+            s_ip_mac_axis_ready_r <= 1'b0;
         end
     end
 end
+
+assign s_ip_mac_axis_ready = s_ip_mac_axis_ready_r;
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin

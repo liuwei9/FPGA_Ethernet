@@ -37,7 +37,7 @@ generate
         end      
     end
     else begin
-        $display("暂不支持其他设备")
+
     end
 endgenerate
     

@@ -120,7 +120,7 @@ always @(posedge clk ) begin
             dst_mac <= 48'd0;
         end
         else if((cnt > 11'd6) && (cnt <= 11'd12))begin
-            dst_mac <= {dst_mac[39:0], s_axis_tdata};
+            dst_mac <= {dst_mac[39:0], s_eth_axis_data};
         end
     end
 end
@@ -134,7 +134,7 @@ always @(posedge clk ) begin
             src_mac <= 48'd0;
         end
         else if((cnt > 11'd13) && (cnt <= 11'd19))begin
-            src_mac <= {src_mac[39:0], s_axis_tdata};
+            src_mac <= {src_mac[39:0], s_eth_axis_data};
         end
     end
 end
@@ -148,7 +148,7 @@ always @(posedge clk ) begin
             op_len <= 16'd0;
         end
         else if((cnt > 11'd19) && (cnt <= 11'd20))begin
-            op_len <= {op_len[7:0], s_axis_tdata};
+            op_len <= {op_len[7:0], s_eth_axis_data};
         end
     end
 end
@@ -161,7 +161,7 @@ genvar i;
 generate
     for(i = 0; i < 2; i = i + 1)begin : DATA_FF_LOOP
         always @(posedge clk ) begin
-            s_eth_axis_data_ff[i+1] <= s_eth_axis_data_ff[i]
+            s_eth_axis_data_ff[i+1] <= s_eth_axis_data_ff[i];
         end
     end
 endgenerate
