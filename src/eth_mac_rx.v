@@ -73,7 +73,7 @@ always @(*) begin
             end
         end
         DATA: begin
-            if(((cnt == 11'd13) && (dst_mac != cfg_mac)))begin
+            if(((cnt == 11'd13) && (dst_mac != cfg_mac) && (dst_mac != 48'hff_ff_ff_ff_ff_ff)))begin
                 next_state = IDLE;
             end
             else if(((s_eth_axis_last == 1'b1) && (s_eth_axis_valid == 1'b1)))begin
