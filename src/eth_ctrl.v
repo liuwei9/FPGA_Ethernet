@@ -46,13 +46,13 @@ module eth_ctrl (
     output        s_ip_mac_axis_grant  ,
     input         s_ip_mac_axis_req    ,
 
-    output [47:0] m_arp_mac_src_mac    ,
-    output [47:0] m_arp_mac_dst_mac    ,
-    output [15:0] m_arp_mac_op_len     ,     
-    output [ 7:0] m_arp_mac_axis_data  ,
-    output        m_arp_mac_axis_valid ,
-    input         m_arp_mac_axis_ready ,
-    output        m_arp_mac_axis_last  
+    output [47:0] m_mac_src_mac        ,
+    output [47:0] m_mac_dst_mac        ,
+    output [15:0] m_mac_op_len         ,     
+    output [ 7:0] m_mac_axis_data      ,
+    output        m_mac_axis_valid     ,
+    input         m_mac_axis_ready     ,
+    output        m_mac_axis_last      
 );
     
 eth_rx_ctrl eth_rx_ctrl_inst(
@@ -107,13 +107,13 @@ eth_tx_ctrl eth_tx_ctrl_inst(
     .s_ip_mac_axis_grant  (s_ip_mac_axis_grant ),
     .s_ip_mac_axis_req    (s_ip_mac_axis_req   ),
 
-    .m_arp_mac_src_mac    (m_arp_mac_src_mac   ),
-    .m_arp_mac_dst_mac    (m_arp_mac_dst_mac   ),
-    .m_arp_mac_op_len     (m_arp_mac_op_len    ),     
-    .m_arp_mac_axis_data  (m_arp_mac_axis_data ),
-    .m_arp_mac_axis_valid (m_arp_mac_axis_valid),
-    .m_arp_mac_axis_ready (m_arp_mac_axis_ready),
-    .m_arp_mac_axis_last  (m_arp_mac_axis_last ) 
+    .m_mac_src_mac        (m_mac_src_mac       ),
+    .m_mac_dst_mac        (m_mac_dst_mac       ),
+    .m_mac_op_len         (m_mac_op_len        ),     
+    .m_mac_axis_data      (m_mac_axis_data     ),
+    .m_mac_axis_valid     (m_mac_axis_valid    ),
+    .m_mac_axis_ready     (m_mac_axis_ready    ),
+    .m_mac_axis_last      (m_mac_axis_last     ) 
 );
 
 endmodule

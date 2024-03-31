@@ -21,13 +21,13 @@ module eth_tx_ctrl (
     output        s_ip_mac_axis_grant  ,
     input         s_ip_mac_axis_req    ,
 
-    output [47:0] m_arp_mac_src_mac    ,
-    output [47:0] m_arp_mac_dst_mac    ,
-    output [15:0] m_arp_mac_op_len     ,     
-    output [ 7:0] m_arp_mac_axis_data  ,
-    output        m_arp_mac_axis_valid ,
-    input         m_arp_mac_axis_ready ,
-    output        m_arp_mac_axis_last   
+    output [47:0] m_mac_src_mac        ,
+    output [47:0] m_mac_dst_mac        ,
+    output [15:0] m_mac_op_len         ,     
+    output [ 7:0] m_mac_axis_data      ,
+    output        m_mac_axis_valid     ,
+    input         m_mac_axis_ready     ,
+    output        m_mac_axis_last       
 );
 
 localparam REQ_NUM = 2;
@@ -48,12 +48,12 @@ reg  [REQ_NUM - 1:0] grant_ff ;
 reg s_arp_mac_axis_ready_r;
 reg s_ip_mac_axis_ready_r;
 
-reg [47:0] m_arp_mac_src_mac_r    ;
-reg [47:0] m_arp_mac_dst_mac_r    ;
-reg [15:0] m_arp_mac_op_len_r     ;
-reg [ 7:0] m_arp_mac_axis_data_r  ;
-reg        m_arp_mac_axis_valid_r ;
-reg        m_arp_mac_axis_last_r  ;
+reg [47:0] m_mac_src_mac_r    ;
+reg [47:0] m_mac_dst_mac_r    ;
+reg [15:0] m_mac_op_len_r     ;
+reg [ 7:0] m_mac_axis_data_r  ;
+reg        m_mac_axis_valid_r ;
+reg        m_mac_axis_last_r  ;
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
         curr_state <= IDLE;
@@ -123,7 +123,7 @@ always @(posedge clk ) begin
     end
     else begin
         if(curr_state == ARP)begin
-            s_arp_mac_axis_ready_r <= m_arp_mac_axis_ready;
+            s_arp_mac_axis_ready_r <= m_mac_axis_ready;
         end
         else begin
             s_arp_mac_axis_ready_r <= 1'b0;
@@ -131,7 +131,7 @@ always @(posedge clk ) begin
     end
 end
 
-assign s_arp_mac_axis_ready = s_arp_mac_axis_ready_r;
+assign s_arp_mac_axis_ready = s_arp_mac_axis_ready_r & m_mac_axis_ready;
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
@@ -139,7 +139,7 @@ always @(posedge clk ) begin
     end
     else begin
         if(curr_state == IP)begin
-            s_ip_mac_axis_ready_r <= m_arp_mac_axis_ready;
+            s_ip_mac_axis_ready_r <= m_mac_axis_ready;
         end
         else begin
             s_ip_mac_axis_ready_r <= 1'b0;
@@ -147,41 +147,41 @@ always @(posedge clk ) begin
     end
 end
 
-assign s_ip_mac_axis_ready = s_ip_mac_axis_ready_r;
+assign s_ip_mac_axis_ready = s_ip_mac_axis_ready_r & m_mac_axis_ready;
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
-        m_arp_mac_src_mac_r    <= 48'd0;
-        m_arp_mac_dst_mac_r    <= 48'd0;
-        m_arp_mac_op_len_r     <= 16'd0;
-        m_arp_mac_axis_data_r  <=  8'd0;
-        m_arp_mac_axis_valid_r <=  1'b0;
-        m_arp_mac_axis_last_r  <=  1'b0;
+        m_mac_src_mac_r    <= 48'd0;
+        m_mac_dst_mac_r    <= 48'd0;
+        m_mac_op_len_r     <= 16'd0;
+        m_mac_axis_data_r  <=  8'd0;
+        m_mac_axis_valid_r <=  1'b0;
+        m_mac_axis_last_r  <=  1'b0;
     end 
     else begin
         if(curr_state == ARP)begin
-            m_arp_mac_src_mac_r    <= s_arp_mac_src_mac   ;
-            m_arp_mac_dst_mac_r    <= s_arp_mac_dst_mac   ;
-            m_arp_mac_op_len_r     <= s_arp_mac_op_len    ;
-            m_arp_mac_axis_data_r  <= s_arp_mac_axis_data ;
-            m_arp_mac_axis_valid_r <= s_arp_mac_axis_valid;
-            m_arp_mac_axis_last_r  <= s_arp_mac_axis_last ;
+            m_mac_src_mac_r    <= s_arp_mac_src_mac   ;
+            m_mac_dst_mac_r    <= s_arp_mac_dst_mac   ;
+            m_mac_op_len_r     <= s_arp_mac_op_len    ;
+            m_mac_axis_data_r  <= s_arp_mac_axis_data ;
+            m_mac_axis_valid_r <= s_arp_mac_axis_valid;
+            m_mac_axis_last_r  <= s_arp_mac_axis_last ;
         end
         else if(curr_state == IP)begin
-            m_arp_mac_src_mac_r    <= s_ip_mac_src_mac    ;
-            m_arp_mac_dst_mac_r    <= s_ip_mac_dst_mac    ;
-            m_arp_mac_op_len_r     <= s_ip_mac_op_len     ;
-            m_arp_mac_axis_data_r  <= s_ip_mac_axis_data  ;
-            m_arp_mac_axis_valid_r <= s_ip_mac_axis_valid ;
-            m_arp_mac_axis_last_r  <= s_ip_mac_axis_last  ;
+            m_mac_src_mac_r    <= s_ip_mac_src_mac    ;
+            m_mac_dst_mac_r    <= s_ip_mac_dst_mac    ;
+            m_mac_op_len_r     <= s_ip_mac_op_len     ;
+            m_mac_axis_data_r  <= s_ip_mac_axis_data  ;
+            m_mac_axis_valid_r <= s_ip_mac_axis_valid ;
+            m_mac_axis_last_r  <= s_ip_mac_axis_last  ;
         end
         else begin
-            m_arp_mac_src_mac_r    <= 48'd0;
-            m_arp_mac_dst_mac_r    <= 48'd0;
-            m_arp_mac_op_len_r     <= 16'd0;
-            m_arp_mac_axis_data_r  <=  8'd0;
-            m_arp_mac_axis_valid_r <=  1'b0;
-            m_arp_mac_axis_last_r  <=  1'b0;
+            m_mac_src_mac_r    <= 48'd0;
+            m_mac_dst_mac_r    <= 48'd0;
+            m_mac_op_len_r     <= 16'd0;
+            m_mac_axis_data_r  <=  8'd0;
+            m_mac_axis_valid_r <=  1'b0;
+            m_mac_axis_last_r  <=  1'b0;
         end
     end
 end
