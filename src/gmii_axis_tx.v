@@ -19,6 +19,28 @@ module gmii_axis_tx #(
 // reg       s_mac_tx_gmii_dv  ;
 // reg       s_mac_tx_gmii_err ;
 
+wire [7:0] fifo_axis_data ;
+wire       fifo_axis_valid;
+wire       fifo_axis_last ;
+wire       fifo_axis_ready;
+
+stream_fifo #(
+    .DP (2048),
+    .WD (8   )
+) stream_fifo_inst (
+    .clk     (clk              ),
+    .rst     (rst              ),
+    .s_data  (s_eth_axis_data  ),
+    .s_valid (s_eth_axis_valid ),
+    .s_last  (s_eth_axis_last  ),
+    .s_ready (s_eth_axis_ready ),
+
+    .m_data  (fifo_axis_data   ),
+    .m_valid (fifo_axis_valid  ),
+    .m_last  (fifo_axis_last   ),
+    .m_ready (fifo_axis_ready  ) 
+);
+
 generate
     if(DEVICE == "XILINX")begin
    xpm_fifo_axis #(
@@ -109,7 +131,7 @@ generate
                                                // indicates the number of words available for reading in the
                                                // FIFO.
 
-      .s_axis_tready(s_eth_axis_ready),           // 1-bit output: TREADY: Indicates that the slave can accept a
+      .s_axis_tready(fifo_axis_ready),           // 1-bit output: TREADY: Indicates that the slave can accept a
                                                // transfer in the current cycle.
 
       .sbiterr_axis(),             // 1-bit output: Single Bit Error- Indicates that the ECC
@@ -134,7 +156,7 @@ generate
                                                // interface are sampled on the rising edge of this clock.
 
       .s_aresetn(!rst),                   // 1-bit input: Active low asynchronous reset.
-      .s_axis_tdata(s_eth_axis_data),             // TDATA_WIDTH-bit input: TDATA: The primary payload that is
+      .s_axis_tdata(fifo_axis_data),             // TDATA_WIDTH-bit input: TDATA: The primary payload that is
                                                // used to provide the data that is passing across the
                                                // interface. The width of the data payload is an integer number
                                                // of bytes.
@@ -155,7 +177,7 @@ generate
                                                // KEEP[0] = 1b, DATA[7:0] is not a NULL byte KEEP[7] = 0b,
                                                // DATA[63:56] is a NULL byte
 
-      .s_axis_tlast(s_eth_axis_last),             // 1-bit input: TLAST: Indicates the boundary of a packet.
+      .s_axis_tlast(fifo_axis_last),             // 1-bit input: TLAST: Indicates the boundary of a packet.
       .s_axis_tstrb(1'b1),             // TDATA_WIDTH/8-bit input: TSTRB: The byte qualifier that
                                                // indicates whether the content of the associated byte of TDATA
                                                // is processed as a data byte or a position byte. For a 64-bit
@@ -169,7 +191,7 @@ generate
                                                // information that can be transmitted alongside the data
                                                // stream.
 
-      .s_axis_tvalid(s_eth_axis_valid)            // 1-bit input: TVALID: Indicates that the master is driving a
+      .s_axis_tvalid(fifo_axis_valid)            // 1-bit input: TVALID: Indicates that the master is driving a
                                                // valid transfer. A transfer takes place when both TVALID and
                                                // TREADY are asserted
    );
