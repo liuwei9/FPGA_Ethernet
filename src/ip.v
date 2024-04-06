@@ -1,7 +1,9 @@
 module ip (
     input         clk              ,
     input         rst              ,
-    input  [31:0] cfg_ip           ,  
+    input  [31:0] cfg_ip           , 
+    input  [15:0] cfg_udp_src_port ,
+    input  [15:0] cfg_udp_dst_port , 
 
     input  [47:0] s_mac_src_mac    ,
     input  [47:0] s_mac_dst_mac    ,
@@ -10,6 +12,11 @@ module ip (
     input         s_mac_axis_valid ,
     input         s_mac_axis_last  ,
     input         s_mac_axis_error ,
+
+    output [ 7:0] m_udp_axis_data  ,
+    output        m_udp_axis_valid ,
+    output        m_udp_axis_last  ,
+    output        m_udp_axis_error 
 );
 
 localparam ICMP = 8'd1 ;
@@ -61,6 +68,24 @@ ip_rx ip_rx_inst(
     .m_ip_axis_valid  (m_ip_axis_valid ),
     .m_ip_axis_last   (m_ip_axis_last  ),
     .m_ip_axis_error  (m_ip_axis_error ) 
+);
+
+udp udp_inst(
+    .clk              (clk                ),
+    .rst              (rst                ),
+
+    .cfg_udp_src_port (cfg_udp_src_port   ),
+    .cfg_udp_dst_port (cfg_udp_dst_port   ),
+
+    .s_ip_axis_data   (m_ip_axis_data_ff  ),
+    .s_ip_axis_valid  (m_ip_udp_axis_valid),
+    .s_ip_axis_last   (m_ip_axis_last_ff  ),
+    .s_ip_axis_error  (m_ip_axis_error_ff ),
+
+    .m_udp_axis_data  (m_udp_axis_data    ),
+    .m_udp_axis_valid (m_udp_axis_valid   ),
+    .m_udp_axis_last  (m_udp_axis_last    ),
+    .m_udp_axis_error (m_udp_axis_error   )
 );
     
 endmodule
