@@ -7,7 +7,7 @@ module stream_fifo #(
     input        [WD - 1 : 0]         s_data ,
     input                             s_valid,
     input                             s_last ,
-    output                            s_ready,
+    output reg                        s_ready,
 
     output       [WD - 1 : 0]         m_data ,
     output                            m_valid,
