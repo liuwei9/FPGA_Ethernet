@@ -24,6 +24,121 @@ wire       fifo_axis_valid;
 wire       fifo_axis_last ;
 wire       fifo_axis_ready;
 
+reg rst_r;
+reg rst_2r;
+
+reg w_ping;
+reg r_ping;
+
+wire [7:0] s_data    ;
+wire       s_valid   ;
+wire       s_last    ;
+wire       s_ready   ;
+
+wire [7:0] m_data    ;
+wire       m_valid   ;
+wire       m_last    ;
+
+wire [7:0] ping_s_data ;
+wire       ping_s_valid;
+wire       ping_s_last ;
+wire       ping_s_ready;
+
+wire [7:0] pang_s_data ;
+wire       pang_s_valid;
+wire       pang_s_last ;
+wire       pang_s_ready;
+
+wire [7:0] ping_m_data ;
+wire       ping_m_valid;
+wire       ping_m_last ;
+
+wire [7:0] pang_m_data ;
+wire       pang_m_valid;
+wire       pang_m_last ;
+
+reg  [7:0] m_data_ff ;
+reg        m_valid_ff;
+
+always @(posedge mac_tx_gmii_clk ) begin
+    rst_r  <= rst  ;
+    rst_2r <= rst_r;
+end
+
+always @(posedge mac_tx_gmii_clk ) begin
+    if(rst_2r == 1'b1)begin
+        w_ping <= 1'b0;
+    end
+    else begin
+        if((s_valid == 1'b1) && (s_ready == 1'b1) && (s_last == 1'b1))begin
+            w_ping <= !w_ping;
+        end
+    end
+end
+
+always @(posedge mac_tx_gmii_clk ) begin
+    if(rst_2r == 1'b1)begin
+        r_ping <= 1'b0;
+    end
+    else begin
+        if((m_valid == 1'b1) && (m_last == 1'b1))begin
+            r_ping <= !r_ping;
+        end
+    end
+end
+
+assign ping_s_data  = (w_ping == 1'b0) ? s_data[7:0]  : 8'b0;
+assign ping_s_valid = (w_ping == 1'b0) ? s_valid      : 1'b0;
+assign ping_s_last  = (w_ping == 1'b0) ? s_last[8]    : 1'b0;
+
+assign pang_s_data  = (w_ping == 1'b1) ? s_data[7:0]  : 8'b0;
+assign pang_s_valid = (w_ping == 1'b1) ? s_valid      : 1'b0;
+assign pang_s_last  = (w_ping == 1'b1) ? s_last[8]    : 1'b0;
+
+assign s_ready = (w_ping == 1'b0) ? ping_s_ready : pang_s_ready;
+
+assign m_valid = (r_ping == 1'b0) ? ping_m_valid : pang_m_valid;
+assign m_data  = (r_ping == 1'b0) ? ping_m_data  : pang_m_data ;
+assign m_last  = (r_ping == 1'b0) ? ping_m_last  : pang_m_last ;
+
+always @(posedge mac_tx_gmii_clk ) begin
+    if(rst_2r == 1'b1)begin
+        m_data_ff  <= 8'b0;
+        m_valid_ff <= 1'b0;
+    end
+    else begin
+        m_data_ff  <= m_data ;
+        m_valid_ff <= m_valid;
+    end
+end
+
+assign mac_tx_gmii_data = m_data_ff ;
+assign mac_tx_gmii_dv   = m_valid_ff; 
+
+gmii_axis_tx_mem gmii_axis_tx_mem_ping(
+    .clk        (mac_tx_gmii_clk),
+    .rst        (rst_2r         ),
+    .s_data     (ping_s_data    ),
+    .s_valid    (ping_s_valid   ),
+    .s_last     (ping_s_last    ),
+    .s_ready    (ping_s_ready   ),
+    .m_data     (ping_m_data    ),
+    .m_valid    (ping_m_valid   ),
+    .m_last     (ping_m_last    )
+);
+
+gmii_axis_tx_mem gmii_axis_tx_mem_pang(
+    .clk        (mac_tx_gmii_clk),
+    .rst        (rst_2r         ),
+    .s_data     (pang_s_data    ),
+    .s_valid    (pang_s_valid   ),
+    .s_last     (pang_s_last    ),
+    .s_ready    (pang_s_ready   ),
+    .m_data     (pang_m_data    ),
+    .m_valid    (pang_m_valid   ),
+    .m_last     (pang_m_last    )
+);
+
 stream_fifo #(
     .DP (2048),
     .WD (8   )
@@ -48,20 +163,20 @@ generate
       .CDC_SYNC_STAGES(2),            // DECIMAL
       .CLOCKING_MODE("independent_clock"), // String
       .ECC_MODE("no_ecc"),            // String
-      .FIFO_DEPTH(2048),              // DECIMAL
+      .FIFO_DEPTH(512),              // DECIMAL
       .FIFO_MEMORY_TYPE("auto"),      // String
-      .PACKET_FIFO("true"),          // String
+      .PACKET_FIFO("false"),          // String
       .PROG_EMPTY_THRESH(10),         // DECIMAL
       .PROG_FULL_THRESH(10),          // DECIMAL
-      .RD_DATA_COUNT_WIDTH(11),        // DECIMAL
+      .RD_DATA_COUNT_WIDTH(9),        // DECIMAL
       .RELATED_CLOCKS(0),             // DECIMAL
       .SIM_ASSERT_CHK(0),             // DECIMAL; 0=disable simulation messages, 1=enable simulation messages
-      .TDATA_WIDTH(7),               // DECIMAL
+      .TDATA_WIDTH(9),               // DECIMAL
       .TDEST_WIDTH(1),                // DECIMAL
       .TID_WIDTH(1),                  // DECIMAL
       .TUSER_WIDTH(1),                // DECIMAL
       .USE_ADV_FEATURES("1000"),      // String
-      .WR_DATA_COUNT_WIDTH(11)         // DECIMAL
+      .WR_DATA_COUNT_WIDTH(9)         // DECIMAL
    )
    xpm_fifo_axis_inst (
       .almost_empty_axis(),   // 1-bit output: Almost Empty : When asserted, this signal
@@ -76,7 +191,7 @@ generate
                                                // decoder detected a double-bit error and data in the FIFO core
                                                // is corrupted.
 
-      .m_axis_tdata(mac_tx_gmii_data),             // TDATA_WIDTH-bit output: TDATA: The primary payload that is
+      .m_axis_tdata(s_data),             // TDATA_WIDTH-bit output: TDATA: The primary payload that is
                                                // used to provide the data that is passing across the
                                                // interface. The width of the data payload is an integer number
                                                // of bytes.
@@ -111,7 +226,7 @@ generate
                                                // information that can be transmitted alongside the data
                                                // stream.
 
-      .m_axis_tvalid(mac_tx_gmii_dv),           // 1-bit output: TVALID: Indicates that the master is driving a
+      .m_axis_tvalid(s_valid),           // 1-bit output: TVALID: Indicates that the master is driving a
                                                // valid transfer. A transfer takes place when both TVALID and
                                                // TREADY are asserted
 
@@ -149,14 +264,14 @@ generate
       .m_aclk(m_aclk),                         // 1-bit input: Master Interface Clock: All signals on master
                                                // interface are sampled on the rising edge of this clock.
 
-      .m_axis_tready(1'b1),           // 1-bit input: TREADY: Indicates that the slave can accept a
+      .m_axis_tready(s_ready),           // 1-bit input: TREADY: Indicates that the slave can accept a
                                                // transfer in the current cycle.
 
       .s_aclk(clk),                         // 1-bit input: Slave Interface Clock: All signals on slave
                                                // interface are sampled on the rising edge of this clock.
 
       .s_aresetn(!rst),                   // 1-bit input: Active low asynchronous reset.
-      .s_axis_tdata(fifo_axis_data),             // TDATA_WIDTH-bit input: TDATA: The primary payload that is
+      .s_axis_tdata({fifo_axis_last, fifo_axis_data}),             // TDATA_WIDTH-bit input: TDATA: The primary payload that is
                                                // used to provide the data that is passing across the
                                                // interface. The width of the data payload is an integer number
                                                // of bytes.
