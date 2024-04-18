@@ -108,7 +108,7 @@ always @(posedge clk ) begin
     end
 end
 
-assign ren = (curr_state == READ);
+assign ren = (curr_state == READ) && (rdata[8] == 1'b0);
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
