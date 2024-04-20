@@ -4,6 +4,9 @@ module udp_tx (
 
     input  [15:0] cfg_udp_src_port ,
     input  [15:0] cfg_udp_dst_port ,
+    input  [31:0] cfg_src_ip       ,
+    input  [31:0] cfg_dst_ip       ,
+    input  [10:0] cfg_udp_len      ,
 
     input  [ 7:0] s_udp_axis_data  ,
     input         s_udp_axis_valid ,
@@ -30,26 +33,34 @@ wire [ 8:0] rdata;
 
 reg  [ 3:0] wait_cnt;
 
-reg  [ 4:0] s_udp_axis_valid_ff;
+reg         s_udp_axis_valid_ff;
 
 reg [15:0] cfg_udp_src_port_r;
 reg [15:0] cfg_udp_dst_port_r;
+reg [31:0] cfg_src_ip_r      ;
+reg [31:0] cfg_dst_ip_r      ;
+reg [10:0] cfg_udp_len_r     ;
+
+reg [31:0] fcs;
+reg [ 1:0] fcs_cnt;
+reg [31:0] data_temp;
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
-        s_udp_axis_valid_ff <= 5'b0;
-
+        s_udp_axis_valid_ff <= 1'b0;
     end
     else begin
-        s_udp_axis_valid_ff <= {s_udp_axis_valid_ff[3:0], s_udp_axis_valid};
-
+        s_udp_axis_valid_ff <= s_udp_axis_valid;
     end
 end
 
 always @(posedge clk ) begin
-    if((s_udp_axis_valid == 1'b1) && (s_udp_axis_valid_ff[0] == 1'b0))begin
+    if((s_udp_axis_valid == 1'b1) && (s_udp_axis_valid_ff == 1'b0))begin
         cfg_udp_src_port_r <= cfg_udp_src_port;
         cfg_udp_dst_port_r <= cfg_udp_dst_port;
+        cfg_src_ip_r       <= cfg_src_ip      ;
+        cfg_dst_ip_r       <= cfg_dst_ip      ;
+        cfg_udp_len_r      <= cfg_udp_len     ;
     end
 end
 
@@ -143,6 +154,63 @@ always @(posedge clk ) begin
         end
         else begin
             raddr <= 11'd0;
+        end
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        fcs_cnt <= 2'b0;
+    end
+    else begin
+        if((s_udp_axis_valid == 1'b1) && (s_udp_axis_ready == 1'b1))begin
+            fcs_cnt <= fcs_cnt + 2'b1;
+        end
+        else begin
+            fcs_cnt <= 2'b0;
+        end
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        data_temp <= 32'd0;
+    end
+    else begin
+        if((s_udp_axis_valid == 1'b1) && (s_udp_axis_ready == 1'b1))begin
+            case (fcs_cnt)
+                2'd0: begin
+                    data_temp <= {s_udp_axis_data, 24'd0};
+                end 
+                2'd1: begin
+                    data_temp <= {data_temp[31:24], s_udp_axis_data, 16'd0};
+                end 
+                2'd2: begin
+                    data_temp <= {data_temp[31:16], s_udp_axis_data, 8'd0};
+                end 
+                2'd3: begin
+                    data_temp <= {data_temp[31:8], s_udp_axis_data};
+                end 
+            endcase
+        end
+        else begin
+            if(curr_state == READ)begin
+                data_temp <= 32'd0;
+            end
+        end
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        fcs <= 32'd0;
+    end
+    else begin
+        if((s_udp_axis_valid == 1'b1) && (s_udp_axis_ready == 1'b1) && (s_udp_axis_last == 1'b1))begin
+            
+        end
+        else begin
+            
         end
     end
 end
