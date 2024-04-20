@@ -35,15 +35,20 @@ reg  [ 3:0] wait_cnt;
 
 reg         s_udp_axis_valid_ff;
 
+reg         s_udp_axis_fire;
+reg         s_udp_axis_fire_last;
+
 reg [15:0] cfg_udp_src_port_r;
 reg [15:0] cfg_udp_dst_port_r;
 reg [31:0] cfg_src_ip_r      ;
 reg [31:0] cfg_dst_ip_r      ;
-reg [10:0] cfg_udp_len_r     ;
+reg [15:0] cfg_udp_len_r     ;
 
-reg [31:0] fcs;
+reg [16:0] fcs;
 reg [ 1:0] fcs_cnt;
 reg [31:0] data_temp;
+
+reg [159:0] check_head;
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
@@ -60,7 +65,7 @@ always @(posedge clk ) begin
         cfg_udp_dst_port_r <= cfg_udp_dst_port;
         cfg_src_ip_r       <= cfg_src_ip      ;
         cfg_dst_ip_r       <= cfg_dst_ip      ;
-        cfg_udp_len_r      <= cfg_udp_len     ;
+        cfg_udp_len_r      <= cfg_udp_len + 11'd8   ;
     end
 end
 
@@ -203,14 +208,37 @@ end
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
-        fcs <= 32'd0;
+        s_udp_axis_fire <= 1'b0;
+        s_udp_axis_fire_last <= 1'b0;
     end
     else begin
-        if((s_udp_axis_valid == 1'b1) && (s_udp_axis_ready == 1'b1) && (s_udp_axis_last == 1'b1))begin
-            
+        s_udp_axis_fire <= (s_udp_axis_valid == 1'b1) && (s_udp_axis_ready == 1'b1);
+        s_udp_axis_fire_last <= (s_udp_axis_valid == 1'b1) && (s_udp_axis_ready == 1'b1) && (s_udp_axis_last == 1'b1);
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        fcs <= 17'd0;
+        check_head <= 16'd0;
+    end
+    else begin
+        if((curr_state == WAIT) && (wait_cnt == 4'd0))begin
+            check_head <= {cfg_src_ip_r, cfg_dst_ip_r, 8'd0, 8'd17, cfg_udp_len_r, cfg_udp_src_port_r, cfg_udp_dst_port_r, cfg_udp_len_r, 8'd0};
+        end
+
+        if(s_udp_axis_fire == 1'b1)begin
+            fcs <= ((fcs + data_temp) & 17'hFFFF) + ((fcs + data_temp) & 17'1_0000);
         end
         else begin
-            
+            if((wait_cnt > 4'd0) && (wait_cnt < 4'd11))begin
+                fcs <= ((fcs + check_head[159 -: 16]) & 17'hFFFF) + ((fcs + check_head[159 -: 16]) & 17'1_0000);
+            end
+            else begin
+                if(wait_cnt == 4'd11)begin
+                    fcs <= ~fcs;
+                end
+            end
         end
     end
 end
