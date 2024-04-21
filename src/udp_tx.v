@@ -16,19 +16,23 @@ module udp_tx (
     output [7:0]  m_ip_axis_data   ,
     output        m_ip_axis_valid  ,
     output        m_ip_axis_last   ,
-    input         m_ip_axis_ready  
+    input         m_ip_axis_ready  ,
+
+    output        m_ip_req         ,
+    input         m_ip_grant        
 
 );
 
-localparam IDLE  = 6'b000001;
-localparam WRITE = 6'b000010;
-localparam WAIT  = 6'b000100;
-localparam READY = 6'b001000;
-localparam HEAD  = 6'b010000;
-localparam READ  = 6'b100000;
+localparam IDLE  = 7'b0000001;
+localparam WRITE = 7'b0000010;
+localparam WAIT  = 7'b0000100;
+localparam REQ   = 7'b0001000;
+localparam READY = 7'b0010000;
+localparam HEAD  = 7'b0100000;
+localparam READ  = 7'b1000000;
 
-reg [5:0] curr_state;
-reg [5:0] next_state;
+reg [6:0] curr_state;
+reg [6:0] next_state;
 
 wire [ 8:0] wdata;
 wire        wen  ;
@@ -69,6 +73,8 @@ reg        udp_data_last ;
 reg [7:0]  m_ip_axis_data_r ;
 reg        m_ip_axis_valid_r;
 reg        m_ip_axis_last_r ;
+
+reg        m_ip_req_r;
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
@@ -118,10 +124,18 @@ always @(*) begin
         end
         WAIT: begin
             if(wait_cnt == 4'b1111)begin
-                next_state =HEAD;
+                next_state =REQ;
             end
             else begin
                 next_state = WAIT;
+            end
+        end
+        REQ: begin
+            if((m_ip_req_r == 1'b1) && (m_ip_grant == 1'b1))begin
+                next_state =HEAD;
+            end
+            else begin
+                next_state = REQ;
             end
         end
         READY: begin
@@ -208,6 +222,27 @@ always @(posedge clk ) begin
         end
     end
 end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        m_ip_req_r <= 1'b0;
+    end
+    else begin
+        if(curr_state == REQ)begin
+            if((m_ip_req_r == 1'b1) && (m_ip_grant == 1'b1))begin
+                m_ip_req_r <= 1'b0;
+            end
+            else begin
+                m_ip_req_r <= 1'b1;
+            end
+        end
+        else begin
+            m_ip_req_r <= 1'b0;
+        end
+    end
+end
+
+assign m_ip_req = m_ip_req_r;
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin

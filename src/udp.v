@@ -17,6 +17,8 @@ module udp (
     output        m_ip_axis_valid  ,
     output        m_ip_axis_last   ,
     input         m_ip_axis_ready  ,
+    output        m_ip_req         ,
+    input         m_ip_grant       ,
 
     input  [ 7:0] s_udp_axis_data  ,
     input         s_udp_axis_valid ,
@@ -49,6 +51,11 @@ wire [7:0]  ip_pang_data     ;
 wire        ip_pang_valid    ;
 wire        ip_pang_last     ;
 wire        ip_pang_ready    ;
+
+wire        udp_ping_req     ;
+wire        udp_ping_grant   ;
+wire        udp_pang_req     ;
+wire        udp_pang_grant   ;
 
 udp_rx udp_rx_inst(
     .clk              (clk              ),
@@ -86,7 +93,10 @@ udp_tx udp_tx_ping(
     .m_ip_axis_data   (ip_ping_data     ),
     .m_ip_axis_valid  (ip_ping_valid    ),
     .m_ip_axis_last   (ip_ping_last     ),
-    .m_ip_axis_ready  (ip_ping_ready    )
+    .m_ip_axis_ready  (ip_ping_ready    ),
+
+    .m_ip_req         (udp_ping_req     ),
+    .m_ip_grant       (udp_ping_grant   )
 
 );
 
@@ -108,7 +118,9 @@ udp_tx udp_tx_pang(
     .m_ip_axis_data   (ip_pang_data     ),
     .m_ip_axis_valid  (ip_pang_valid    ),
     .m_ip_axis_last   (ip_pang_last     ),
-    .m_ip_axis_ready  (ip_pang_ready    )
+    .m_ip_axis_ready  (ip_pang_ready    ),
+    .m_ip_req         (udp_pang_req     ),
+    .m_ip_grant       (udp_pang_grant   )
 
 );
 
@@ -126,6 +138,9 @@ udp_tx_ctrl udp_tx_ctrl_inst(
     .m_ip_axis_last   (m_ip_axis_last   ),
     .m_ip_axis_ready  (m_ip_axis_ready  ),
 
+    .m_ip_req         (m_ip_req         ),       
+    .m_ip_grant       (m_ip_grant       ),       
+
     .udp_ping_data    (udp_ping_data    ),
     .udp_ping_valid   (udp_ping_valid   ),
     .udp_ping_last    (udp_ping_last    ),
@@ -135,6 +150,12 @@ udp_tx_ctrl udp_tx_ctrl_inst(
     .udp_pang_valid   (udp_pang_valid   ),
     .udp_pang_last    (udp_pang_last    ),
     .udp_pang_ready   (udp_pang_ready   ),
+
+    .udp_ping_req     (udp_ping_req     ),
+    .udp_ping_grant   (udp_ping_grant   ),
+
+    .udp_pang_req     (udp_pang_req     ),
+    .udp_pang_grant   (udp_pang_grant   ),
 
     .ip_ping_data     (ip_ping_data     ),
     .ip_ping_valid    (ip_ping_valid    ),
