@@ -13,16 +13,22 @@ module udp_tx (
     input         s_udp_axis_last  ,
     output        s_udp_axis_ready ,
 
+    output [7:0]  m_ip_axis_data   ,
+    output        m_ip_axis_valid  ,
+    output        m_ip_axis_last   ,
+    input         m_ip_axis_ready  
+
 );
 
-localparam IDLE  = 5'b00001;
-localparam WRITE = 5'b00010;
-localparam WAIT  = 5'b00100;
-localparam HEAD  = 5'b01000;
-localparam READ  = 5'b10000;
+localparam IDLE  = 6'b000001;
+localparam WRITE = 6'b000010;
+localparam WAIT  = 6'b000100;
+localparam READY = 6'b001000;
+localparam HEAD  = 6'b010000;
+localparam READ  = 6'b100000;
 
-reg [4:0] curr_state;
-reg [4:0] next_state;
+reg [5:0] curr_state;
+reg [5:0] next_state;
 
 wire [ 8:0] wdata;
 wire        wen  ;
@@ -30,6 +36,7 @@ reg  [10:0] waddr;
 wire        ren  ;
 reg  [10:0] raddr;
 wire [ 8:0] rdata;
+reg         ren_ff;
 
 reg  [ 3:0] wait_cnt;
 
@@ -49,6 +56,19 @@ reg [ 1:0] fcs_cnt;
 reg [31:0] data_temp;
 
 reg [159:0] check_head;
+
+reg [63:0] head;
+reg [ 2:0] head_cnt;
+reg [ 7:0] udp_head;
+reg        udp_head_valid;
+
+reg [ 7:0] udp_data;
+reg        udp_data_valid;
+reg        udp_data_last ;
+
+reg [7:0]  m_ip_axis_data_r ;
+reg        m_ip_axis_valid_r;
+reg        m_ip_axis_last_r ;
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
@@ -104,11 +124,29 @@ always @(*) begin
                 next_state = WAIT;
             end
         end
+        READY: begin
+            if(m_ip_axis_ready == 1'b1)begin
+                next_state = HEAD;
+            end
+            else begin
+                next_state = READY;
+            end
+        end
         HEAD: begin
-            
+            if(head_cnt == 3'b111)begin
+                next_state = READ;
+            end
+            else begin
+                next_state = HEAD;
+            end
         end
         READ: begin
-            
+            if((ren_ff == 1'b1) && (rdata[8] == 1'b1))begin
+                next_state = IDLE;
+            end
+            else begin
+                next_state = READ;
+            end
         end
         default: begin
             next_state = IDLE;
@@ -148,7 +186,15 @@ always @(posedge clk ) begin
     end
 end
 
-assign ren = ((curr_state == READ) && (rdata[8] == 1'b0)) || ((curr_state == HEAD) && (next_state == READ));
+assign ren = ((curr_state == READ) && (rdata[8] == 1'b0));
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        ren_ff <= 1'b0;
+    end
+    else begin
+        ren_ff <= ren;
+    end
+end
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
         raddr <= 11'd0;
@@ -233,6 +279,7 @@ always @(posedge clk ) begin
         else begin
             if((wait_cnt > 4'd0) && (wait_cnt < 4'd11))begin
                 fcs <= ((fcs + check_head[159 -: 16]) & 17'hFFFF) + ((fcs + check_head[159 -: 16]) & 17'1_0000);
+                check_head <= check_head << 5'd16;
             end
             else begin
                 if(wait_cnt == 4'd11)begin
@@ -242,6 +289,70 @@ always @(posedge clk ) begin
         end
     end
 end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        head <= 64'd0;
+        udp_head <= 8'd0;
+        udp_head_valid <= 1'b0;
+    end
+    else begin
+        if(wait_cnt == 4'd12)begin
+            head <= {cfg_udp_src_port_r, cfg_udp_dst_port_r, cfg_udp_len_r, fcs[15:0]};
+        end
+        if(curr_state == HEAD)begin
+            udp_head <= head[63 -: 8];
+            head <= head << 4'd8;
+            udp_head_valid <= 1'b1;
+        end
+        else begin
+            udp_head <= 8'd0;
+            udp_head_valid <= 1'b0;
+        end
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        udp_data <= 8'd0;
+        udp_data_valid <= 1'b0;
+        udp_data_last  <= 1'b0;
+    end
+    else begin
+        udp_data <= ren_ff;
+        udp_data_valid <= rdata[7:0];
+        udp_data_last  <= rdata[8];
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        m_ip_axis_data_r  <= 8'd0;
+        m_ip_axis_valid_r <= 1'b0;
+        m_ip_axis_last_r  <= 1'b0;
+    end
+    else begin
+        if(udp_head_valid == 1'b1)begin
+            m_ip_axis_data_r  <= udp_head;
+            m_ip_axis_valid_r <= 1'b1;
+            m_ip_axis_last_r  <= 1'b0;
+        end
+        else if(udp_data_valid == 1'b1)begin
+            m_ip_axis_data_r  <= udp_data;
+            m_ip_axis_valid_r <= 1'b1;
+            m_ip_axis_last_r  <= udp_data_last;
+        end
+        else begin
+            m_ip_axis_data_r  <= 8'd0;
+            m_ip_axis_valid_r <= 1'b0;
+            m_ip_axis_last_r  <= 1'b0;
+        end
+    end
+end
+
+assign m_ip_axis_data  = m_ip_axis_data_r ;
+assign m_ip_axis_valid = m_ip_axis_valid_r;
+assign m_ip_axis_last  = m_ip_axis_last_r ;
 
 tpram #(
     .DP    (2048),
