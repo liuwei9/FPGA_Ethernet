@@ -29,6 +29,8 @@ module udp (
     output        m_udp_axis_valid ,
     output        m_udp_axis_last  ,
     output [15:0] m_ip_axis_len    ,
+    output [31:0] m_ip_axis_src_ip ,
+    output [31:0] m_ip_axis_dst_ip ,
     output        m_udp_axis_error     
 );
 
@@ -47,12 +49,16 @@ wire [7:0]  ip_ping_data     ;
 wire        ip_ping_valid    ;
 wire        ip_ping_last     ;
 wire [15:0] ip_ping_len      ;
+wire [31:0] ip_ping_src_ip   ;
+wire [31:0] ip_ping_dst_ip   ;
 wire        ip_ping_ready    ;
 
 wire [7:0]  ip_pang_data     ;
 wire        ip_pang_valid    ;
 wire        ip_pang_last     ;
 wire [15:0] ip_pang_len      ;
+wire [31:0] ip_pang_src_ip   ;
+wire [31:0] ip_pang_dst_ip   ;
 wire        ip_pang_ready    ;
 
 wire        udp_ping_req     ;
@@ -97,6 +103,8 @@ udp_tx udp_tx_ping(
     .m_ip_axis_valid  (ip_ping_valid    ),
     .m_ip_axis_last   (ip_ping_last     ),
     .m_ip_axis_len    (ip_ping_len      ),
+    .m_ip_axis_src_ip (ip_ping_src_ip   ),
+    .m_ip_axis_dst_ip (ip_ping_dst_ip   ),
     .m_ip_axis_ready  (ip_ping_ready    ),
 
     .m_ip_req         (udp_ping_req     ),
@@ -123,7 +131,9 @@ udp_tx udp_tx_pang(
     .m_ip_axis_valid  (ip_pang_valid    ),
     .m_ip_axis_last   (ip_pang_last     ),
     .m_ip_axis_ready  (ip_pang_ready    ),
-    .m_ip_axis_len    (),
+    .m_ip_axis_len    (ip_pang_len      ),
+    .m_ip_axis_src_ip (ip_pang_src_ip   ),
+    .m_ip_axis_dst_ip (ip_pang_dst_ip   ),
 
     .m_ip_req         (udp_pang_req     ),
     .m_ip_grant       (udp_pang_grant   )
@@ -143,6 +153,8 @@ udp_tx_ctrl udp_tx_ctrl_inst(
     .m_ip_axis_valid  (m_ip_axis_valid  ),
     .m_ip_axis_last   (m_ip_axis_last   ),
     .m_ip_axis_len    (m_ip_axis_len    ),
+    .m_ip_axis_src_ip (m_ip_axis_src_ip ),
+    .m_ip_axis_dst_ip (m_ip_axis_dst_ip ),
     .m_ip_axis_ready  (m_ip_axis_ready  ),
 
     .m_ip_req         (m_ip_req         ),       
@@ -168,12 +180,16 @@ udp_tx_ctrl udp_tx_ctrl_inst(
     .ip_ping_valid    (ip_ping_valid    ),
     .ip_ping_last     (ip_ping_last     ),
     .ip_ping_len      (ip_ping_len      ),
+    ,ip_ping_src_ip   (ip_ping_src_ip   ),
+    ,ip_ping_dst_ip   (ip_ping_dst_ip   ),
     .ip_ping_ready    (ip_ping_ready    ),
 
     .ip_pang_data     (ip_pang_data     ),
     .ip_pang_valid    (ip_pang_valid    ),
     .ip_pang_last     (ip_pang_last     ),
     .ip_pang_len      (ip_pang_len      ),
+    .ip_pang_src_ip   (ip_pang_src_ip   ),
+    .ip_pang_dst_ip   (ip_pang_dst_ip   ),
     .ip_pang_ready    (ip_pang_ready    )
 );
     

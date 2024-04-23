@@ -11,6 +11,8 @@ module udp_tx_ctrl (
     output        m_ip_axis_valid  ,
     output        m_ip_axis_last   ,
     output [15:0] m_ip_axis_len    ,
+    output [31:0] m_ip_axis_src_ip ,
+    output [31:0] m_ip_axis_dst_ip ,
     input         m_ip_axis_ready  ,
 
     output        m_ip_req         ,
@@ -36,12 +38,16 @@ module udp_tx_ctrl (
     input         ip_ping_valid    ,
     input         ip_ping_last     ,
     input  [15:0] ip_ping_len      ,
+    input  [31:0] ip_ping_src_ip   ,
+    input  [31:0] ip_ping_dst_ip   ,
     output        ip_ping_ready    ,
 
     input  [7:0]  ip_pang_data     ,
     input         ip_pang_valid    ,
     input         ip_pang_last     ,
     input  [15:0] ip_pang_len      ,
+    input  [31:0] ip_pang_src_ip   ,
+    input  [31:0] ip_pang_dst_ip   ,
     output        ip_pang_ready    
 );
 
