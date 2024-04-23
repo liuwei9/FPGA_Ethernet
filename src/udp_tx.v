@@ -16,6 +16,7 @@ module udp_tx (
     output [7:0]  m_ip_axis_data   ,
     output        m_ip_axis_valid  ,
     output        m_ip_axis_last   ,
+    output [15:0] m_ip_axis_len    ,
     input         m_ip_axis_ready  ,
 
     output        m_ip_req         ,
@@ -73,6 +74,7 @@ reg        udp_data_last ;
 reg [7:0]  m_ip_axis_data_r ;
 reg        m_ip_axis_valid_r;
 reg        m_ip_axis_last_r ;
+reg [15:0] m_ip_axis_len_r  ;
 
 reg        m_ip_req_r;
 
@@ -86,7 +88,7 @@ always @(posedge clk ) begin
 end
 
 always @(posedge clk ) begin
-    if((s_udp_axis_valid == 1'b1) && (s_udp_axis_valid_ff == 1'b0))begin
+    if((s_udp_axis_valid == 1'b1) && (curr_state == IDLE))begin
         cfg_udp_src_port_r <= cfg_udp_src_port;
         cfg_udp_dst_port_r <= cfg_udp_dst_port;
         cfg_src_ip_r       <= cfg_src_ip      ;
@@ -385,9 +387,21 @@ always @(posedge clk ) begin
     end
 end
 
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        m_ip_axis_len_r <= 16'd0;
+    end
+    else begin
+        if(curr_state == WAIT)begin
+            m_ip_axis_len_r <= cfg_udp_len_r;
+        end
+    end
+end
+
 assign m_ip_axis_data  = m_ip_axis_data_r ;
 assign m_ip_axis_valid = m_ip_axis_valid_r;
 assign m_ip_axis_last  = m_ip_axis_last_r ;
+assign m_ip_axis_len   = m_ip_axis_len_r  ;
 
 tpram #(
     .DP    (2048),

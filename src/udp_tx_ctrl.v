@@ -10,6 +10,7 @@ module udp_tx_ctrl (
     output [7:0]  m_ip_axis_data   ,
     output        m_ip_axis_valid  ,
     output        m_ip_axis_last   ,
+    output [15:0] m_ip_axis_len    ,
     input         m_ip_axis_ready  ,
 
     output        m_ip_req         ,
@@ -34,11 +35,13 @@ module udp_tx_ctrl (
     input  [7:0]  ip_ping_data     ,
     input         ip_ping_valid    ,
     input         ip_ping_last     ,
+    input  [15:0] ip_ping_len      ,
     output        ip_ping_ready    ,
 
     input  [7:0]  ip_pang_data     ,
     input         ip_pang_valid    ,
     input         ip_pang_last     ,
+    input  [15:0] ip_pang_len      ,
     output        ip_pang_ready    
 );
 
@@ -85,6 +88,7 @@ assign m_ip_req = ip_ping == 1'b0 : udp_ping_req : udp_pang_req;
 assign m_ip_axis_data  = ip_ping == 1'b0 ? ip_ping_data  : ip_pang_data ;
 assign m_ip_axis_valid = ip_ping == 1'b0 ? ip_ping_valid : ip_pang_valid;
 assign m_ip_axis_last  = ip_ping == 1'b0 ? ip_ping_last  : ip_pang_last ;
+assign m_ip_axis_len   = ip_ping == 1'b0 ? ip_ping_len   : ip_pang_len  ;
 
 assign ip_ping_ready = ip_ping == 1'b0 ? m_ip_axis_ready : 1'b0;
 assign ip_pang_ready = ip_ping == 1'b1 ? m_ip_axis_ready : 1'b0;
