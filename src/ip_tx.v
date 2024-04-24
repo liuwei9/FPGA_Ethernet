@@ -283,16 +283,19 @@ always @(posedge clk ) begin
             fcs <= 17'h8500;
         end
         else if((s_ip_axis_valid_ff[1] == 1'b1) && (s_ip_axis_valid_ff[2] == 1'b0))begin
-            fcs <= ((fcs + fcs_src_ip) & 17'hFFFF) + ((fcs + fcs_src_ip) & 17'1_0000);
+            fcs <= fcs[15:0] + fcs_src_ip + fcs[16];
         end
         else if((s_ip_axis_valid_ff[2] == 1'b1) && (s_ip_axis_valid_ff[3] == 1'b0))begin
-            fcs <= ((fcs + fcs_dst_ip) & 17'hFFFF) + ((fcs + fcs_dst_ip) & 17'1_0000);
+            fcs <= fcs[15:0] + fcs_dst_ip + fcs[16];
         end
         else if((s_ip_axis_valid_ff[3] == 1'b1) && (s_ip_axis_valid_ff[4] == 1'b0))begin
-            fcs <= ((fcs + fcs_len_index) & 17'hFFFF) + ((fcs + fcs_len_index) & 17'1_0000);
+            fcs <= fcs[15:0] + fcs_len_index + fcs[16];
         end
         else if((s_ip_axis_valid_ff[4] == 1'b1) && (s_ip_axis_valid_ff[5] == 1'b0))begin
-            fcs <= ((fcs + fcs_protocol) & 17'hFFFF) + ((fcs + fcs_protocol) & 17'1_0000);
+            fcs <= fcs[15:0] + fcs_protocol + fcs[16];
+        end
+        else if((s_ip_axis_valid_ff[6] == 1'b1) && (s_ip_axis_valid_ff[7] == 1'b0))begin
+            fcs <= ~(fcs[15:0] + fcs[16]);
         end
     end
 end

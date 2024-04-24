@@ -315,16 +315,16 @@ always @(posedge clk ) begin
         end
 
         if(s_udp_axis_fire == 1'b1)begin
-            fcs <= ((fcs + data_temp) & 17'hFFFF) + ((fcs + data_temp) & 17'1_0000);
+            fcs <= fcs[15:0] + data_temp + fcs[16];
         end
         else begin
             if((wait_cnt > 4'd0) && (wait_cnt < 4'd11))begin
-                fcs <= ((fcs + check_head[159 -: 16]) & 17'hFFFF) + ((fcs + check_head[159 -: 16]) & 17'1_0000);
+                fcs <= fcs[15:0] + check_head[159 -: 16] + fcs[16];
                 check_head <= check_head << 5'd16;
             end
             else begin
                 if(wait_cnt == 4'd11)begin
-                    fcs <= ~fcs;
+                    fcs <= ~(fcs[15:0] + fcs[16]);
                 end
             end
         end
