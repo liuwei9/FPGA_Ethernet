@@ -1,27 +1,37 @@
 module ip_tx (
-    input         clk                  ,
-    input         rst                  ,
+    input         clk                   ,
+    input         rst                   ,
 
-    input         s_udp_ip_req         ,
-    output        s_udp_ip_grant       ,
+    input  [47:0] cfg_mac               ,
 
-    input  [ 7:0] s_udp_ip_axis_data   ,
-    input         s_udp_ip_axis_valid  ,
-    input         s_udp_ip_axis_last   ,
-    input  [15:0] s_udp_ip_axis_len    ,
-    input  [31:0] s_udp_ip_axis_src_ip ,
-    input  [31:0] s_udp_ip_axis_dst_ip ,
-    output        s_udp_ip_axis_ready  ,
+    input         s_udp_ip_req          ,
+    output        s_udp_ip_grant        ,
+    input  [31:0] s_udp_ip_src_ip       ,
+    input  [31:0] s_udp_ip_dst_ip       ,
 
-    output [47:0] m_mac_src_mac        ,
-    output [47:0] m_mac_dst_mac        ,
-    output [15:0] m_mac_op_len         ,
-    output [ 7:0] m_mac_axis_data      ,
-    output        m_mac_axis_valid     ,
-    output        m_mac_axis_last      ,
-    input         m_mac_axis_ready     ,
-    output        m_mac_req            ,
-    input         m_mac_grant            
+    input  [ 7:0] s_udp_ip_axis_data    ,
+    input         s_udp_ip_axis_valid   ,
+    input         s_udp_ip_axis_last    ,
+    input  [15:0] s_udp_ip_axis_len     ,
+    output        s_udp_ip_axis_ready   ,
+
+    output [47:0] m_mac_src_mac         ,
+    output [47:0] m_mac_dst_mac         ,
+    output [15:0] m_mac_op_len          ,
+    output [ 7:0] m_mac_axis_data       ,
+    output        m_mac_axis_valid      ,
+    output        m_mac_axis_last       ,
+    input         m_mac_axis_ready      ,
+    output        m_mac_req             ,
+    input         m_mac_grant           ,
+
+    input         m_arp_query_ready     ,
+    output        m_arp_query_valid     ,
+    output [31:0] m_arp_query_ip        , 
+
+    input  [47:0] s_arp_query_resp_mac  ,
+    input  [31:0] s_arp_query_resp_ip   ,
+    input         s_arp_query_resp_valid
 );
 
 localparam REQ_NUM = 1;
@@ -31,12 +41,14 @@ localparam UDP  = 8'd17;
 
 integer i;
 
-localparam IDLE= 3'b001;
-localparam WAIT= 3'b010;
-localparam UDP = 3'b100;
+localparam IDLE    = 5'b00001;
+localparam GRANT   = 5'b00010;
+localparam UDP_MAC = 5'b00100;
+localparam UDP     = 5'b01000;
+localparam WAIT    = 5'b10000;
 
-reg [2:0] curr_state;
-reg [2:0] next_state;
+reg [3:0] curr_state;
+reg [3:0] next_state;
 
 reg m_mac_req_r;
 
@@ -44,6 +56,9 @@ wire [REQ_NUM - 1:0] req;
 
 reg  [REQ_NUM - 1:0] grant_ff;
 wire [REQ_NUM - 1:0] grant   ;
+
+reg        m_arp_query_valid_r ;
+reg [31:0] m_arp_query_ip_r    ;
 
 reg [ 7:0] s_udp_ip_axis_data_ff [20:0]; 
 reg [20:0] s_udp_ip_axis_valid_ff      ;
@@ -53,6 +68,7 @@ reg [ 7:0] s_ip_protocol_r;
 reg [15:0] s_ip_len_r     ;
 reg [31:0] s_ip_src_ip_r  ;
 reg [31:0] s_ip_dst_ip_r  ;
+reg [47:0] dst_mac        ;
 
 reg [16:0] fcs;
 reg [16:0] fcs_src_ip;
@@ -77,12 +93,31 @@ always @(*)begin
     case (curr_state)
         IDLE: begin
             if(|req)begin
-                next_state = WAIT;
+                next_state = GRANT;
             end
             else begin
                 next_state = IDLE;
             end
         end 
+        GRANT: begin
+            if(grant_ff[0] == 1'b1)begin
+                next_state = UDP_MAC;
+            end
+            else begin
+                next_state = UDP_MAC;
+            end         
+        end
+        UDP_MAC: begin
+            if((s_arp_query_resp_valid == 1'b1) && (s_arp_query_resp_ip == s_ip_dst_ip_r))begin
+                next_state = WAIT;
+            end
+            else begin
+                next_state = UDP_MAC;
+            end
+        end
+        UDP: begin
+            
+        end
         WAIT: begin
             if(m_mac_grant == 1'b1)begin
                 if(grant_ff[0] == 1'b1)begin
@@ -90,14 +125,11 @@ always @(*)begin
                 end
                 else begin
                     next_state = UDP;
-                end         
+                end 
             end
             else begin
                 next_state = WAIT;
             end
-        end
-        UDP: begin
-            
         end
         default: begin
             next_state = IDLE;
@@ -144,6 +176,42 @@ end
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
+        s_ip_src_ip_r   <= 31'd0;
+        s_ip_dst_ip_r   <= 31'd0;
+    end
+    else begin
+        if(grant_ff[0] == 1'b1)begin
+            s_ip_src_ip_r   <= s_udp_ip_src_ip;
+            s_ip_dst_ip_r   <= s_udp_ip_dst_ip;
+        end
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        m_arp_query_valid_r <=  1'b0;
+        m_arp_query_ip_r    <= 31'b0;
+    end
+    else begin
+        if((curr_state == GRANT) && (next_state == UDP_MAC))begin
+            if(grant_ff[0] == 1'b1)begin
+                m_arp_query_valid_r <=  1'b1;
+                m_arp_query_ip_r    <= s_udp_ip_dst_ip;
+            end
+        end
+        else begin
+            if((m_arp_query_valid == 1'b1) && (m_arp_query_ready == 1'b1))begin
+                m_arp_query_valid_r <=  1'b0;
+            end
+        end
+    end
+end
+
+assign m_arp_query_valid = m_arp_query_valid_r;
+assign m_arp_query_ip    = m_arp_query_ip_r   ;
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
         s_ip_axis_data_ff[0] <= 8'b0;
         s_ip_axis_valid_ff   <= 21'b0;
         s_ip_axis_last_ff    <= 21'b0;
@@ -168,16 +236,12 @@ endgenerate
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
         s_ip_protocol_r <=  8'd0;
-        s_ip_len_r      <= 16'd0;
-        s_ip_src_ip_r   <= 31'd0;
-        s_ip_dst_ip_r   <= 31'd0;
+        s_ip_len_r      <= 16'd0;      
     end
     else begin
         if((s_udp_ip_axis_valid == 1'b1) && (s_ip_axis_valid_ff[0] == 1'b0))begin
             s_ip_protocol_r <= UDP;
             s_ip_len_r      <= s_udp_ip_axis_len + 16'd20;
-            s_ip_src_ip_r   <= s_udp_ip_axis_src_ip;
-            s_ip_dst_ip_r   <= s_udp_ip_axis_dst_ip; 
         end
     end
 end
@@ -233,7 +297,16 @@ always @(posedge clk ) begin
     end
 end
 
-
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        dst_mac <= 48'd0;
+    end
+    else begin
+        if((s_arp_query_resp_valid == 1'b1) && (s_arp_query_resp_ip == s_ip_dst_ip_r))begin
+            dst_mac <= s_arp_query_resp_mac;
+        end
+    end
+end
 
 arbiter_rr #(
     .REQ_NUM (REQ_NUM)
