@@ -11,12 +11,12 @@ module udp_tx_ctrl (
     output        m_ip_axis_valid  ,
     output        m_ip_axis_last   ,
     output [15:0] m_ip_axis_len    ,
-    output [31:0] m_ip_axis_src_ip ,
-    output [31:0] m_ip_axis_dst_ip ,
     input         m_ip_axis_ready  ,
 
     output        m_ip_req         ,
     input         m_ip_grant       ,
+    output [31:0] m_ip_src_ip      ,
+    output [31:0] m_ip_dst_ip      ,
 
     output [ 7:0] udp_ping_data    ,
     output        udp_ping_valid   ,
@@ -96,8 +96,8 @@ assign m_ip_axis_valid = ip_ping == 1'b0 ? ip_ping_valid : ip_pang_valid;
 assign m_ip_axis_last  = ip_ping == 1'b0 ? ip_ping_last  : ip_pang_last ;
 assign m_ip_axis_len   = ip_ping == 1'b0 ? ip_ping_len   : ip_pang_len  ;
 
-assign m_ip_axis_src_ip = ip_ping == 1'b0 ? ip_ping_src_ip : ip_pang_src_ip;
-assign m_ip_axis_dst_ip = ip_ping == 1'b0 ? ip_ping_dst_ip : ip_pang_dst_ip;
+assign m_ip_src_ip = ip_ping == 1'b0 ? ip_ping_src_ip : ip_pang_src_ip;
+assign m_ip_dst_ip = ip_ping == 1'b0 ? ip_ping_dst_ip : ip_pang_dst_ip;
 
 assign ip_ping_ready = ip_ping == 1'b0 ? m_ip_axis_ready : 1'b0;
 assign ip_pang_ready = ip_ping == 1'b1 ? m_ip_axis_ready : 1'b0;

@@ -19,6 +19,8 @@ module udp (
     input         m_ip_axis_ready  ,
     output        m_ip_req         ,
     input         m_ip_grant       ,
+    output [31:0] m_ip_src_ip      ,
+    output [31:0] m_ip_dst_ip      ,
 
     input  [ 7:0] s_udp_axis_data  ,
     input         s_udp_axis_valid ,
@@ -103,12 +105,12 @@ udp_tx udp_tx_ping(
     .m_ip_axis_valid  (ip_ping_valid    ),
     .m_ip_axis_last   (ip_ping_last     ),
     .m_ip_axis_len    (ip_ping_len      ),
-    .m_ip_axis_src_ip (ip_ping_src_ip   ),
-    .m_ip_axis_dst_ip (ip_ping_dst_ip   ),
     .m_ip_axis_ready  (ip_ping_ready    ),
 
     .m_ip_req         (udp_ping_req     ),
-    .m_ip_grant       (udp_ping_grant   )
+    .m_ip_grant       (udp_ping_grant   ),
+    .m_ip_src_ip      (ip_ping_src_ip   ),
+    .m_ip_dst_ip      (ip_ping_dst_ip   ),
 
 );
 
@@ -132,11 +134,11 @@ udp_tx udp_tx_pang(
     .m_ip_axis_last   (ip_pang_last     ),
     .m_ip_axis_ready  (ip_pang_ready    ),
     .m_ip_axis_len    (ip_pang_len      ),
-    .m_ip_axis_src_ip (ip_pang_src_ip   ),
-    .m_ip_axis_dst_ip (ip_pang_dst_ip   ),
 
     .m_ip_req         (udp_pang_req     ),
-    .m_ip_grant       (udp_pang_grant   )
+    .m_ip_grant       (udp_pang_grant   ),
+    .m_ip_src_ip      (ip_pang_src_ip   ),
+    .m_ip_dst_ip      (ip_pang_dst_ip   )
 
 );
 
@@ -153,12 +155,12 @@ udp_tx_ctrl udp_tx_ctrl_inst(
     .m_ip_axis_valid  (m_ip_axis_valid  ),
     .m_ip_axis_last   (m_ip_axis_last   ),
     .m_ip_axis_len    (m_ip_axis_len    ),
-    .m_ip_axis_src_ip (m_ip_axis_src_ip ),
-    .m_ip_axis_dst_ip (m_ip_axis_dst_ip ),
     .m_ip_axis_ready  (m_ip_axis_ready  ),
 
     .m_ip_req         (m_ip_req         ),       
-    .m_ip_grant       (m_ip_grant       ),       
+    .m_ip_grant       (m_ip_grant       ), 
+    .m_ip_src_ip      (m_ip_src_ip      ),
+    .m_ip_dst_ip      (m_ip_dst_ip      ),      
 
     .udp_ping_data    (udp_ping_data    ),
     .udp_ping_valid   (udp_ping_valid   ),
