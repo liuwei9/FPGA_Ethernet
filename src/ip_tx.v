@@ -60,9 +60,11 @@ wire [REQ_NUM - 1:0] grant   ;
 reg        m_arp_query_valid_r ;
 reg [31:0] m_arp_query_ip_r    ;
 
-reg [ 7:0] s_udp_ip_axis_data_ff [20:0]; 
-reg [20:0] s_udp_ip_axis_valid_ff      ;
-reg [20:0] s_udp_ip_axis_last_ff       ;
+reg        s_udp_ip_axis_ready_r;
+
+reg [ 7:0] s_ip_axis_data_ff [20:0]; 
+reg [20:0] s_ip_axis_valid_ff      ;
+reg [20:0] s_ip_axis_last_ff       ;
 
 reg [ 7:0] s_ip_protocol_r;
 reg [15:0] s_ip_len_r     ;
@@ -77,6 +79,16 @@ reg [16:0] fcs_len_index;
 reg [16:0] fcs_protocol;
 
 reg [ 7:0] index;
+reg [ 4:0] send_cnt;
+
+reg [159:0] data_temp;
+
+reg [47:0] m_mac_src_mac_r   ;   
+reg [47:0] m_mac_dst_mac_r   ;   
+reg [15:0] m_mac_op_len_r    ;    
+reg [ 7:0] m_mac_axis_data_r ; 
+reg        m_mac_axis_valid_r;
+reg        m_mac_axis_last_r ; 
 
 assign req = (curr_state == IDLE) ? s_udp_ip_req : 1'b0;
 
@@ -136,6 +148,22 @@ always @(*)begin
         end
     endcase
 end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        s_udp_ip_axis_ready_r <= 1'b1;
+    end
+    else begin
+        if(curr_state == UDP)begin
+            s_udp_ip_axis_ready_r <= m_mac_axis_ready;
+        end
+        else begin
+            s_udp_ip_axis_ready_r <= 1'b0;
+        end
+    end
+end
+
+assign s_udp_ip_axis_ready = s_udp_ip_axis_ready_r & m_mac_axis_ready;
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
@@ -266,10 +294,16 @@ always @(posedge clk ) begin
     end
     else begin
         if((s_ip_axis_valid_ff[0] == 1'b1) && (s_ip_axis_valid_ff[1] == 1'b0))begin
-            fcs_src_ip <= ((s_ip_src_ip_r[15:0] + s_ip_src_ip_r[31:16]) & 17'hFFFF) + ((s_ip_src_ip_r[15:0] + s_ip_src_ip_r[31:16]) & 17'1_0000);
-            fcs_dst_ip <= ((s_ip_dst_ip_r[15:0] + s_ip_dst_ip_r[31:16]) & 17'hFFFF) + ((s_ip_dst_ip_r[15:0] + s_ip_dst_ip_r[31:16]) & 17'1_0000);
-            fcs_len_index <= ((index + s_ip_len_r) & 17'hFFFF) + ((index + s_ip_len_r) & 17'1_0000);
+            fcs_src_ip <= s_ip_src_ip_r[15:0] + s_ip_src_ip_r[31:16];
+            fcs_dst_ip <= s_ip_dst_ip_r[15:0] + s_ip_dst_ip_r[31:16];
+            fcs_len_index <= index + s_ip_len_r;
             fcs_protocol  <= {8'h40, s_ip_protocol_r};
+        end
+        else if((s_ip_axis_valid_ff[1] == 1'b1) && (s_ip_axis_valid_ff[2] == 1'b0))begin
+            fcs_src_ip <= fcs_src_ip[15:0] + fcs_src_ip[16];
+            fcs_dst_ip <= fcs_dst_ip[15:0] + fcs_dst_ip[16];
+            fcs_len_index <= fcs_len_index[15:0] + fcs_len_index[16];
+            fcs_protocol  <= fcs_protocol;
         end
     end
 end
@@ -282,16 +316,16 @@ always @(posedge clk ) begin
         if(curr_state == IDLE)begin
             fcs <= 17'h8500;
         end
-        else if((s_ip_axis_valid_ff[1] == 1'b1) && (s_ip_axis_valid_ff[2] == 1'b0))begin
+        else if((s_ip_axis_valid_ff[2] == 1'b1) && (s_ip_axis_valid_ff[3] == 1'b0))begin
             fcs <= fcs[15:0] + fcs_src_ip + fcs[16];
         end
-        else if((s_ip_axis_valid_ff[2] == 1'b1) && (s_ip_axis_valid_ff[3] == 1'b0))begin
+        else if((s_ip_axis_valid_ff[3] == 1'b1) && (s_ip_axis_valid_ff[4] == 1'b0))begin
             fcs <= fcs[15:0] + fcs_dst_ip + fcs[16];
         end
-        else if((s_ip_axis_valid_ff[3] == 1'b1) && (s_ip_axis_valid_ff[4] == 1'b0))begin
+        else if((s_ip_axis_valid_ff[4] == 1'b1) && (s_ip_axis_valid_ff[5] == 1'b0))begin
             fcs <= fcs[15:0] + fcs_len_index + fcs[16];
         end
-        else if((s_ip_axis_valid_ff[4] == 1'b1) && (s_ip_axis_valid_ff[5] == 1'b0))begin
+        else if((s_ip_axis_valid_ff[5] == 1'b1) && (s_ip_axis_valid_ff[6] == 1'b0))begin
             fcs <= fcs[15:0] + fcs_protocol + fcs[16];
         end
         else if((s_ip_axis_valid_ff[6] == 1'b1) && (s_ip_axis_valid_ff[7] == 1'b0))begin
@@ -310,6 +344,70 @@ always @(posedge clk ) begin
         end
     end
 end
+
+
+always @(posedge clk ) begin
+    m_mac_src_mac_r <= cfg_mac;
+    m_mac_dst_mac_r <= dst_mac;
+    m_mac_op_len_r  <= s_ip_len_r;
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        send_cnt <= 5'd0;
+    end
+    else begin
+        if(s_ip_axis_valid_ff[1] == 1'b1)begin
+            if(send_cnt < 5'd23)begin
+                send_cnt <= send_cnt + 5'd1;
+            end
+        end
+        else begin
+            send_cnt <= 5'd0;
+        end
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        data_temp          <= 159'd0;
+        m_mac_axis_data_r  <= 8'd0;
+        m_mac_axis_valid_r <= 1'd0;
+        m_mac_axis_last_r  <= 1'd0;
+    end
+    else begin
+        if(s_ip_axis_valid_ff[0] == 1'b1)begin
+            data_temp <= {16'h4500, s_ip_len_r, index, 16'h4000, fcs_protocol[15:0], 16'h0000, s_ip_src_ip_r, s_ip_dst_ip_r};
+        end
+        if((s_ip_axis_valid_ff[1] == 1'b1) && (send_cnt < 5'd20))begin
+            data_temp <= data_temp << 4'd8;
+            if(send_cnt == 5'd10)begin
+                m_mac_axis_data_r  <= fcs[15:8];
+            end
+            else if(send_cnt == 5'd11)begin
+                m_mac_axis_data_r  <= fcs[7:0];
+            end
+            else begin
+                m_mac_axis_data_r  <= data_temp[159 -: 8];
+            end
+            m_mac_axis_data_r  <= 8'd0;
+            m_mac_axis_valid_r <= 1'd1;
+            m_mac_axis_last_r  <= 1'd0;
+        end
+        else begin
+            m_mac_axis_data_r  <= s_ip_axis_data_ff [20];
+            m_mac_axis_valid_r <= s_ip_axis_valid_ff[20];
+            m_mac_axis_last_r  <= s_ip_axis_last_ff [20];
+        end
+    end
+end
+
+assign m_mac_src_mac    = m_mac_src_mac_r   ;
+assign m_mac_dst_mac    = m_mac_dst_mac_r   ;
+assign m_mac_op_len     = m_mac_op_len_r    ;
+assign m_mac_axis_data  = m_mac_axis_data_r ;
+assign m_mac_axis_valid = m_mac_axis_valid_r;
+assign m_mac_axis_last  = m_mac_axis_last_r ;
 
 arbiter_rr #(
     .REQ_NUM (REQ_NUM)
