@@ -16,6 +16,7 @@ module udp (
     output [7:0]  m_ip_axis_data   ,
     output        m_ip_axis_valid  ,
     output        m_ip_axis_last   ,
+    output [15:0] m_ip_axis_len    ,
     input         m_ip_axis_ready  ,
     output        m_ip_req         ,
     input         m_ip_grant       ,
@@ -30,9 +31,6 @@ module udp (
     output [ 7:0] m_udp_axis_data  ,
     output        m_udp_axis_valid ,
     output        m_udp_axis_last  ,
-    output [15:0] m_ip_axis_len    ,
-    output [31:0] m_ip_axis_src_ip ,
-    output [31:0] m_ip_axis_dst_ip ,
     output        m_udp_axis_error     
 );
 
