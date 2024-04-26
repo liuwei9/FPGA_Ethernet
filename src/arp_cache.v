@@ -36,8 +36,8 @@ reg [7:0] r_addr;
 wire [31:0] w_ip;
 wire [47:0] w_mac;
 
-wire [31:0] r_ip ;
-wire [47:0] r_mac;
+reg [31:0] r_ip ;
+reg [47:0] r_mac;
 
 reg  [31:0] r_ip_re ;
 reg  [47:0] r_mac_re;
@@ -82,7 +82,7 @@ generate
         assign w_ip   = cnt != FLUSH_TIME ? wip_ff[3]  : 32'd0;
         assign w_mac  = cnt != FLUSH_TIME ? wmac_ff[3] : 48'd0;
         assign w_addr = cnt != FLUSH_TIME ? hash_w : cnt1;
-        assign wen =    cnt != FLUSH_TIM  ? Ew_valid_ff[3] : 1'b1;
+        assign wen =    cnt != FLUSH_TIME ? w_valid_ff[3] : 1'b1;
 
     end
     else begin
@@ -170,7 +170,7 @@ always @(posedge clk ) begin
             end
         end
         else if(ren_re_ff == 1'b1)begin
-            if(r_ip == r_ip_re[4])begin
+            if(r_ip == r_ip_re)begin
                 hit_r <= 2'b01;
                 hit_mac <= r_mac_re;
             end

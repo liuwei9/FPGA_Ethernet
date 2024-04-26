@@ -1,7 +1,7 @@
 module arp_ctrl #(
     parameter FLUSH_TIME = 32'hFFFF_FFFF,
     parameter USE_FLUSH  = "TRUE"       ,
-    parameter RERNW_TIME = 15'hFFFF     
+    parameter RERNW_TIME = 16'hFFFF     
 ) (
     input         clk                     ,
     input         rst                     ,

@@ -34,21 +34,21 @@ module ip_tx (
     input         s_arp_query_resp_valid
 );
 
-localparam REQ_NUM = 1;
+localparam REQ_NUM = 2;
 localparam ICMP = 8'd1 ;
 localparam TCP  = 8'd6 ;
 localparam UDP  = 8'd17;
 
-integer i;
+genvar i;
 
-localparam IDLE    = 5'b00001;
-localparam GRANT   = 5'b00010;
-localparam UDP_MAC = 5'b00100;
-localparam UDP     = 5'b01000;
-localparam WAIT    = 5'b10000;
+localparam IDLE     = 5'b00001;
+localparam GRANT    = 5'b00010;
+localparam UDP_MAC  = 5'b00100;
+localparam UDP_DATA = 5'b01000;
+localparam WAIT     = 5'b10000;
 
-reg [3:0] curr_state;
-reg [3:0] next_state;
+reg [4:0] curr_state;
+reg [4:0] next_state;
 
 reg m_mac_req_r;
 
@@ -127,16 +127,21 @@ always @(*)begin
                 next_state = UDP_MAC;
             end
         end
-        UDP: begin
-            
+        UDP_DATA: begin
+            if((s_udp_ip_axis_last == 1'b1) && (s_udp_ip_axis_valid == 1'b1))begin
+                next_state = IDLE;
+            end
+            else begin
+                next_state = UDP_DATA;
+            end
         end
         WAIT: begin
             if(m_mac_grant == 1'b1)begin
                 if(grant_ff[0] == 1'b1)begin
-                    next_state = UDP;
+                    next_state = UDP_DATA;
                 end
                 else begin
-                    next_state = UDP;
+                    next_state = UDP_DATA;
                 end 
             end
             else begin
@@ -149,12 +154,14 @@ always @(*)begin
     endcase
 end
 
+assign s_udp_ip_grant = (m_mac_grant == 1'b1) && (grant_ff[0] == 1'b1);
+
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
         s_udp_ip_axis_ready_r <= 1'b1;
     end
     else begin
-        if(curr_state == UDP)begin
+        if(curr_state == UDP_DATA)begin
             s_udp_ip_axis_ready_r <= m_mac_axis_ready;
         end
         else begin
@@ -245,10 +252,10 @@ always @(posedge clk ) begin
         s_ip_axis_last_ff    <= 21'b0;
     end
     else begin
-        if(curr_state == UDP)begin
+        if(curr_state == UDP_DATA)begin
             s_ip_axis_data_ff[0] <= s_udp_ip_axis_data ;
-            s_ip_axis_valid_ff   <= {s_udp_ip_axis_valid_ff[19:0], s_udp_ip_axis_valid};
-            s_ip_axis_last_ff    <= {s_udp_ip_axis_last_ff [19:0], s_udp_ip_axis_last };
+            s_ip_axis_valid_ff   <= {s_ip_axis_valid_ff[19:0], s_udp_ip_axis_valid};
+            s_ip_axis_last_ff    <= {s_ip_axis_last_ff [19:0], s_udp_ip_axis_last };
         end      
     end
 end
@@ -376,7 +383,7 @@ always @(posedge clk ) begin
         m_mac_axis_last_r  <= 1'd0;
     end
     else begin
-        if(s_ip_axis_valid_ff[0] == 1'b1)begin
+        if((s_ip_axis_valid_ff[0] == 1'b1) && (s_ip_axis_valid_ff[1] == 1'b0))begin
             data_temp <= {16'h4500, s_ip_len_r, index, 16'h4000, fcs_protocol[15:0], 16'h0000, s_ip_src_ip_r, s_ip_dst_ip_r};
         end
         if((s_ip_axis_valid_ff[1] == 1'b1) && (send_cnt < 5'd20))begin
@@ -414,8 +421,8 @@ arbiter_rr #(
 ) arbiter_rr_inst (
     .clk     (clk     ),
     .rst     (rst     ),
-    .req     (req_ff  ),
-    .grant   (grant) 
+    .req     (req     ),
+    .grant   (grant   ) 
 );
 
 endmodule

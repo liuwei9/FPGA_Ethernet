@@ -9,14 +9,14 @@ localparam MAGIC = 32'd5381;
 localparam PIPE_F = (MAGIC << 32'd5) + MAGIC;
 
 reg [31:0] data_in_ff[3:0];
-reg [7:0] pipe [2:0];
+reg [7:0] pipe [3:0];
 
 always @(posedge clk ) begin
     data_in_ff[0] <= data_in;
 end
 genvar i;
 generate
-    for (i = 0; i < 2; i = i + 1) begin : LOOP_HASH
+    for (i = 0; i < 3; i = i + 1) begin : LOOP_HASH
         always @(posedge clk ) begin
             data_in_ff[i + 1] <= data_in_ff[i];
         end

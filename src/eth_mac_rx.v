@@ -159,7 +159,7 @@ end
 
 genvar i;
 generate
-    for(i = 0; i < 2; i = i + 1)begin : DATA_FF_LOOP
+    for(i = 0; i < 3; i = i + 1)begin : DATA_FF_LOOP
         always @(posedge clk ) begin
             s_eth_axis_data_ff[i+1] <= s_eth_axis_data_ff[i];
         end

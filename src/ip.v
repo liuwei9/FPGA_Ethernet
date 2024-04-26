@@ -6,6 +6,7 @@ module ip (
     input  [31:0] cfg_src_ip            ,
     input  [31:0] cfg_dst_ip            ,
     input  [10:0] cfg_udp_len           ,
+    input  [47:0] cfg_src_mac           ,
 
     input  [47:0] s_mac_src_mac         ,
     input  [47:0] s_mac_dst_mac         ,
@@ -59,6 +60,16 @@ reg        m_ip_axis_last_ff  ;
 reg        m_ip_axis_error_ff ;
 reg        m_ip_udp_axis_valid;
 
+wire [7:0]  s_udp_ip_axis_data ;
+wire        s_udp_ip_axis_valid;
+wire        s_udp_ip_axis_last ;
+wire [15:0] s_udp_ip_axis_len  ;
+wire        s_udp_ip_axis_ready;
+wire        s_udp_ip_req       ;
+wire        s_udp_ip_grant     ;
+wire [31:0] s_udp_ip_src_ip    ;
+wire [31:0] s_udp_ip_dst_ip    ;
+
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
         m_ip_axis_data_ff   <= 8'b0;
@@ -99,7 +110,7 @@ ip_tx ip_tx_inst(
     .clk                   (clk                   ),
     .rst                   (rst                   ),
 
-    .cfg_mac               (cfg_mac               ),
+    .cfg_mac               (cfg_src_mac           ),
 
     .s_udp_ip_req          (s_udp_ip_req          ),
     .s_udp_ip_grant        (s_udp_ip_grant        ),
@@ -137,9 +148,9 @@ udp udp_inst(
 
     .cfg_udp_src_port (cfg_udp_src_port   ),
     .cfg_udp_dst_port (cfg_udp_dst_port   ),
-    。cfg_src_ip      (cfg_src_ip         ),
-    。cfg_dst_ip      (cfg_dst_ip         ),
-    。cfg_udp_len     (cfg_udp_len        ),
+    .cfg_src_ip       (cfg_src_ip         ),
+    .cfg_dst_ip       (cfg_dst_ip         ),
+    .cfg_udp_len      (cfg_udp_len        ),
 
     .s_ip_axis_data   (m_ip_axis_data_ff  ),
     .s_ip_axis_valid  (m_ip_udp_axis_valid),
@@ -149,7 +160,7 @@ udp udp_inst(
     .m_ip_axis_data   (s_udp_ip_axis_data ),
     .m_ip_axis_valid  (s_udp_ip_axis_valid),
     .m_ip_axis_last   (s_udp_ip_axis_last ),
-    .m_ip_axis_len    (s_udp_ip_axis_len  )
+    .m_ip_axis_len    (s_udp_ip_axis_len  ),
     .m_ip_axis_ready  (s_udp_ip_axis_ready),
     .m_ip_req         (s_udp_ip_req       ),
     .m_ip_grant       (s_udp_ip_grant     ),

@@ -13,7 +13,7 @@ module crc(
 );
 
 reg [31:0] lfsr_q,lfsr_c;
-
+wire [7:0] data_in;
 assign crc_out = lfsr_q;
 assign data_in = {crc_data_in[0], crc_data_in[1], crc_data_in[2], crc_data_in[3], crc_data_in[4], crc_data_in[5], crc_data_in[7], crc_data_in[7]};
 

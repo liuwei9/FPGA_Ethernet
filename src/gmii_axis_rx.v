@@ -162,7 +162,7 @@ generate
             .injectsbiterr_axis(), // 1-bit input: Single Bit Error Injection- Injects a single bit
                                                      // error if the ECC feature is used.
       
-            .m_aclk(m_aclk),                         // 1-bit input: Master Interface Clock: All signals on master
+            .m_aclk(clk),                         // 1-bit input: Master Interface Clock: All signals on master
                                                      // interface are sampled on the rising edge of this clock.
       
             .m_axis_tready(m_axis_tready),           // 1-bit input: TREADY: Indicates that the slave can accept a

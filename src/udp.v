@@ -108,7 +108,7 @@ udp_tx udp_tx_ping(
     .m_ip_req         (udp_ping_req     ),
     .m_ip_grant       (udp_ping_grant   ),
     .m_ip_src_ip      (ip_ping_src_ip   ),
-    .m_ip_dst_ip      (ip_ping_dst_ip   ),
+    .m_ip_dst_ip      (ip_ping_dst_ip   )
 
 );
 
@@ -180,8 +180,8 @@ udp_tx_ctrl udp_tx_ctrl_inst(
     .ip_ping_valid    (ip_ping_valid    ),
     .ip_ping_last     (ip_ping_last     ),
     .ip_ping_len      (ip_ping_len      ),
-    ,ip_ping_src_ip   (ip_ping_src_ip   ),
-    ,ip_ping_dst_ip   (ip_ping_dst_ip   ),
+    .ip_ping_src_ip   (ip_ping_src_ip   ),
+    .ip_ping_dst_ip   (ip_ping_dst_ip   ),
     .ip_ping_ready    (ip_ping_ready    ),
 
     .ip_pang_data     (ip_pang_data     ),

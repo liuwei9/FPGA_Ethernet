@@ -1,7 +1,7 @@
 module arp #(
     parameter FLUSH_TIME = 32'hFFFF_FFFF,
     parameter USE_FLUSH  = "TRUE"       ,
-    parameter RERNW_TIME = 15'hFFFF   
+    parameter RERNW_TIME = 16'hFFFF   
 ) (
     input        clk              ,
     input        rst              ,
@@ -130,10 +130,10 @@ arp_tx arp_tx_inst(
     .cfg_ip            (cfg_ip         ),
     .cfg_mac           (cfg_mac        ),
 
-    .arp_tx_valid      (arp_tx_ready   ),
-    .arp_tx_ready      (arp_tx_valid   ),
-    .arp_tx_ip         (arp_tx_mac     ),
-    .arp_tx_mac        (arp_tx_ip      ),
+    .arp_tx_valid      (arp_tx_valid   ),
+    .arp_tx_ready      (arp_tx_ready   ),
+    .arp_tx_ip         (arp_tx_ip      ),
+    .arp_tx_mac        (arp_tx_mac     ),
     .arp_tx_op         (arp_tx_op      ),
 
     .m_mac_src_mac     (m_mac_src_mac   ),

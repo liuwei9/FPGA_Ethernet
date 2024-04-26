@@ -189,6 +189,7 @@ always @(posedge clk ) begin
 end
 
 assign wen = s_udp_axis_valid;
+assign wdata = {s_udp_axis_last, s_udp_axis_data};
 assign s_udp_axis_ready = (curr_state == IDLE) || (curr_state == WRITE);
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
@@ -355,6 +356,22 @@ end
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
+        head_cnt <= 3'd0;
+    end
+    else begin
+        if(curr_state == HEAD)begin
+            if(head_cnt != 3'b111)begin
+                head_cnt <= head_cnt + 3'd1;
+            end
+        end
+        else begin
+            head_cnt <= 3'd0;
+        end
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
         udp_data <= 8'd0;
         udp_data_valid <= 1'b0;
         udp_data_last  <= 1'b0;
@@ -393,9 +410,9 @@ end
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
-        m_ip_axis_len_r    <= 16'd0;
-        m_ip_axis_src_ip_r <= 32'd0;
-        m_ip_axis_dst_ip_r <= 32'd0;
+        m_ip_axis_len_r <= 16'd0;
+        m_ip_src_ip_r   <= 32'd0;
+        m_ip_dst_ip_r   <= 32'd0;
     end
     else begin
         if(curr_state == WAIT)begin

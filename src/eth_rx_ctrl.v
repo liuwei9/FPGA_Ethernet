@@ -139,5 +139,21 @@ always @(posedge clk ) begin
         s_ip_mac_axis_error_r <= s_mac_axis_error_ff;
     end
 end
+
+assign m_arp_mac_src_mac    = s_arp_mac_src_mac_r   ;
+assign m_arp_mac_dst_mac    = s_arp_mac_dst_mac_r   ;
+assign m_arp_mac_op_len     = s_arp_mac_op_len_r    ;
+assign m_arp_mac_axis_data  = s_arp_mac_axis_data_r ;
+assign m_arp_mac_axis_valid = s_arp_mac_axis_valid_r;
+assign m_arp_mac_axis_last  = s_arp_mac_axis_last_r ;
+assign m_arp_mac_axis_error = s_arp_mac_axis_error_r;
+
+assign m_ip_mac_src_mac     = s_ip_mac_src_mac_r    ;
+assign m_ip_mac_dst_mac     = s_ip_mac_dst_mac_r    ;
+assign m_ip_mac_op_len      = s_ip_mac_op_len_r     ;
+assign m_ip_mac_axis_data   = s_ip_mac_axis_data_r  ;
+assign m_ip_mac_axis_valid  = s_ip_mac_axis_valid_r ;
+assign m_ip_mac_axis_last   = s_ip_mac_axis_last_r  ;
+assign m_ip_mac_axis_error  = s_ip_mac_axis_error_r ;
     
 endmodule

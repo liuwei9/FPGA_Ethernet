@@ -37,7 +37,7 @@ reg [47:0] m_mac_src_mac_r;
 reg [47:0] m_mac_dst_mac_r;
 reg [15:0] m_mac_op_len_r ;
 
-reg [4:0] cnt;
+reg [5:0] cnt;
 reg [7:0] axis_data ;
 reg       axis_valid;
 reg       axis_last ;
@@ -92,7 +92,7 @@ always @(*) begin
             end
         end
         SEND: begin
-            if(cnt == 5'd45)begin
+            if(cnt == 6'd45)begin
                 next_state = LAST;
             end
             else begin
@@ -126,10 +126,10 @@ end
 always @(posedge clk ) begin
     if((arp_tx_valid == 1'b1) && (arp_tx_ready == 1'b1))begin
         pre_data <= {8'h01, 8'h08, 8'h00, 8'h06, 8'h04, 8'h00, {6'b0, arp_tx_op}};
-        src_mac  <= cfg_mac;
-        dst_mac  <= arp_tx_mac;
-        src_ip   <= cfg_ip;
-        dst_ip   <= arp_tx_ip;
+//        src_mac  <= cfg_mac;
+//        dst_mac  <= arp_tx_mac;
+//        src_ip   <= cfg_ip;
+//        dst_ip   <= arp_tx_ip;
     end
 end
 
@@ -200,7 +200,7 @@ always @(posedge clk ) begin
         axis_last <= 1'b0;
     end
     else begin
-        axis_last <= cnt == 5'd45;
+        axis_last <= cnt == 6'd45;
     end
 end
 

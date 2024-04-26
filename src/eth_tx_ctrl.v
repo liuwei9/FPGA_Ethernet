@@ -190,7 +190,12 @@ assign req = (curr_state == IDLE) ? {s_ip_mac_axis_req, s_arp_mac_axis_req} : {R
 assign s_arp_mac_axis_grant = grant_ff[0];
 assign s_ip_mac_axis_grant  = grant_ff[1];
 
-
+assign m_mac_src_mac    = m_mac_src_mac_r   ;
+assign m_mac_dst_mac    = m_mac_dst_mac_r   ;
+assign m_mac_op_len     = m_mac_op_len_r    ;
+assign m_mac_axis_data  = m_mac_axis_data_r ;
+assign m_mac_axis_valid = m_mac_axis_valid_r;
+assign m_mac_axis_last  = m_mac_axis_last_r ;
 
 arbiter_rr #(
     .REQ_NUM (REQ_NUM)

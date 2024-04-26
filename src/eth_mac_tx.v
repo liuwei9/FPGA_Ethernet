@@ -19,7 +19,7 @@ module eth_mac_tx (
 localparam IDLE  = 6'b000001;
 localparam RECV  = 6'b000010;
 localparam WAIT  = 6'b000100;
-localparam PRE   = 6'b000100;
+localparam PRE   = 6'b001000;
 localparam SEND  = 6'b010000;
 localparam FCS   = 6'b100000;
 
@@ -293,7 +293,7 @@ always @(posedge clk ) begin
         else if(curr_state == FCS)begin
             tx_data  <= tx_fcs[31 -: 8];
             tx_valid <= 1'b1;
-            tx_fcs   <= tx_fcs << 3'd8;
+            tx_fcs   <= tx_fcs << 4'd8;
         end
         else begin
             tx_data  <= 8'b0;

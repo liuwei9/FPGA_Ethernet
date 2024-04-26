@@ -60,6 +60,24 @@ wire       pang_m_last ;
 reg  [7:0] m_data_ff ;
 reg        m_valid_ff;
 
+localparam SEND = 2'b01;
+localparam GAP  = 2'b10;
+
+localparam GAP_CNT = 7'd96;
+reg [1:0] curr_state;
+reg [1:0] next_state;
+
+reg [6:0] gap_cnt;
+
+wire [8:0] dout;
+wire       full;
+wire       empty;
+wire       rd_en;
+wire       wr_en;
+wire [8:0] din;
+wire       wr_rst_busy;
+wire       rd_rst_busy;
+
 always @(posedge mac_tx_gmii_clk ) begin
     rst_r  <= rst  ;
     rst_2r <= rst_r;
@@ -87,13 +105,13 @@ always @(posedge mac_tx_gmii_clk ) begin
     end
 end
 
-assign ping_s_data  = (w_ping == 1'b0) ? s_data[7:0]  : 8'b0;
-assign ping_s_valid = (w_ping == 1'b0) ? s_valid      : 1'b0;
-assign ping_s_last  = (w_ping == 1'b0) ? s_last[8]    : 1'b0;
+assign ping_s_data  = (w_ping == 1'b0) ? dout[7:0]  : 8'b0;
+assign ping_s_valid = (w_ping == 1'b0) ? s_valid    : 1'b0;
+assign ping_s_last  = (w_ping == 1'b0) ? dout[8]    : 1'b0;
 
-assign pang_s_data  = (w_ping == 1'b1) ? s_data[7:0]  : 8'b0;
-assign pang_s_valid = (w_ping == 1'b1) ? s_valid      : 1'b0;
-assign pang_s_last  = (w_ping == 1'b1) ? s_last[8]    : 1'b0;
+assign pang_s_data  = (w_ping == 1'b1) ? dout[7:0]  : 8'b0;
+assign pang_s_valid = (w_ping == 1'b1) ? s_valid    : 1'b0;
+assign pang_s_last  = (w_ping == 1'b1) ? dout[8]    : 1'b0;
 
 assign s_ready = (w_ping == 1'b0) ? ping_s_ready : pang_s_ready;
 
@@ -156,159 +174,173 @@ stream_fifo #(
     .m_ready (fifo_axis_ready  ) 
 );
 
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        curr_state <= SEND;
+    end
+    else begin
+        curr_state <= next_state;
+    end
+end
+
+always @(*) begin
+    case (curr_state)
+        SEND: begin
+            if((fifo_axis_last == 1'b1) && (fifo_axis_ready == 1'b1) && (fifo_axis_valid == 1'b1))begin
+                next_state = GAP;
+            end
+            else begin
+                next_state = SEND;
+            end
+        end 
+        GAP: begin
+            if(gap_cnt == GAP_CNT)begin
+                next_state = SEND;
+            end
+            else begin
+                next_state = GAP;
+            end
+        end
+        default: begin
+            next_state = SEND;
+        end
+    endcase
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        gap_cnt <= 7'd0;
+    end
+    else begin
+        if(curr_state == GAP)begin
+            gap_cnt <= gap_cnt + 7'd1;
+        end
+    end
+end
+
+assign s_valid = rd_en;
+assign s_last  = dout[8];
+assign rd_en   = (empty == 1'b0) && (rd_rst_busy == 1'b0) && (s_ready == 1'b1);
+assign wr_en   = (fifo_axis_ready == 1'b1) && (fifo_axis_valid == 1'b1);
+assign fifo_axis_ready = (full == 1'b0) && (wr_rst_busy == 1'b0) && (curr_state == SEND);
+assign din     = {fifo_axis_last, fifo_axis_data};
+
 generate
     if(DEVICE == "XILINX")begin
-   xpm_fifo_axis #(
-      .CASCADE_HEIGHT(0),             // DECIMAL
-      .CDC_SYNC_STAGES(2),            // DECIMAL
-      .CLOCKING_MODE("independent_clock"), // String
-      .ECC_MODE("no_ecc"),            // String
-      .FIFO_DEPTH(512),              // DECIMAL
-      .FIFO_MEMORY_TYPE("auto"),      // String
-      .PACKET_FIFO("false"),          // String
-      .PROG_EMPTY_THRESH(10),         // DECIMAL
-      .PROG_FULL_THRESH(10),          // DECIMAL
-      .RD_DATA_COUNT_WIDTH(9),        // DECIMAL
-      .RELATED_CLOCKS(0),             // DECIMAL
-      .SIM_ASSERT_CHK(0),             // DECIMAL; 0=disable simulation messages, 1=enable simulation messages
-      .TDATA_WIDTH(9),               // DECIMAL
-      .TDEST_WIDTH(1),                // DECIMAL
-      .TID_WIDTH(1),                  // DECIMAL
-      .TUSER_WIDTH(1),                // DECIMAL
-      .USE_ADV_FEATURES("1000"),      // String
-      .WR_DATA_COUNT_WIDTH(9)         // DECIMAL
+   xpm_fifo_async #(
+      .CASCADE_HEIGHT(0),        // DECIMAL
+      .CDC_SYNC_STAGES(2),       // DECIMAL
+      .DOUT_RESET_VALUE("0"),    // String
+      .ECC_MODE("no_ecc"),       // String
+      .FIFO_MEMORY_TYPE("auto"), // String
+      .FIFO_READ_LATENCY(1),     // DECIMAL
+      .FIFO_WRITE_DEPTH(512),   // DECIMAL
+      .FULL_RESET_VALUE(0),      // DECIMAL
+      .PROG_EMPTY_THRESH(10),    // DECIMAL
+      .PROG_FULL_THRESH(10),     // DECIMAL
+      .RD_DATA_COUNT_WIDTH(1),   // DECIMAL
+      .READ_DATA_WIDTH(9),      // DECIMAL
+      .READ_MODE("fwft"),         // String
+      .RELATED_CLOCKS(0),        // DECIMAL
+      .SIM_ASSERT_CHK(0),        // DECIMAL; 0=disable simulation messages, 1=enable simulation messages
+      .USE_ADV_FEATURES("0707"), // String
+      .WAKEUP_TIME(0),           // DECIMAL
+      .WRITE_DATA_WIDTH(9),     // DECIMAL
+      .WR_DATA_COUNT_WIDTH(9)    // DECIMAL
    )
-   xpm_fifo_axis_inst (
-      .almost_empty_axis(),   // 1-bit output: Almost Empty : When asserted, this signal
-                                               // indicates that only one more read can be performed before the
-                                               // FIFO goes to empty.
+   xpm_fifo_async_inst (
+      .almost_empty(),   // 1-bit output: Almost Empty : When asserted, this signal indicates that
+                                     // only one more read can be performed before the FIFO goes to empty.
 
-      .almost_full_axis(),     // 1-bit output: Almost Full: When asserted, this signal
-                                               // indicates that only one more write can be performed before
-                                               // the FIFO is full.
+      .almost_full(),     // 1-bit output: Almost Full: When asserted, this signal indicates that
+                                     // only one more write can be performed before the FIFO is full.
 
-      .dbiterr_axis(),             // 1-bit output: Double Bit Error- Indicates that the ECC
-                                               // decoder detected a double-bit error and data in the FIFO core
-                                               // is corrupted.
+      .data_valid(),       // 1-bit output: Read Data Valid: When asserted, this signal indicates
+                                     // that valid data is available on the output bus (dout).
 
-      .m_axis_tdata(s_data),             // TDATA_WIDTH-bit output: TDATA: The primary payload that is
-                                               // used to provide the data that is passing across the
-                                               // interface. The width of the data payload is an integer number
-                                               // of bytes.
+      .dbiterr(),             // 1-bit output: Double Bit Error: Indicates that the ECC decoder detected
+                                     // a double-bit error and data in the FIFO core is corrupted.
 
-      .m_axis_tdest(),             // TDEST_WIDTH-bit output: TDEST: Provides routing information
-                                               // for the data stream.
+      .dout(dout),                   // READ_DATA_WIDTH-bit output: Read Data: The output data bus is driven
+                                     // when reading the FIFO.
 
-      .m_axis_tid(),                 // TID_WIDTH-bit output: TID: The data stream identifier that
-                                               // indicates different streams of data.
+      .empty(empty),                 // 1-bit output: Empty Flag: When asserted, this signal indicates that the
+                                     // FIFO is empty. Read requests are ignored when the FIFO is empty,
+                                     // initiating a read while empty is not destructive to the FIFO.
 
-      .m_axis_tkeep(),             // TDATA_WIDTH/8-bit output: TKEEP: The byte qualifier that
-                                               // indicates whether the content of the associated byte of TDATA
-                                               // is processed as part of the data stream. Associated bytes
-                                               // that have the TKEEP byte qualifier deasserted are null bytes
-                                               // and can be removed from the data stream. For a 64-bit DATA,
-                                               // bit 0 corresponds to the least significant byte on DATA, and
-                                               // bit 7 corresponds to the most significant byte. For example:
-                                               // KEEP[0] = 1b, DATA[7:0] is not a NULL byte KEEP[7] = 0b,
-                                               // DATA[63:56] is a NULL byte
+      .full(full),                   // 1-bit output: Full Flag: When asserted, this signal indicates that the
+                                     // FIFO is full. Write requests are ignored when the FIFO is full,
+                                     // initiating a write when the FIFO is full is not destructive to the
+                                     // contents of the FIFO.
 
-      .m_axis_tlast(),             // 1-bit output: TLAST: Indicates the boundary of a packet.
-      .m_axis_tstrb(),             // TDATA_WIDTH/8-bit output: TSTRB: The byte qualifier that
-                                               // indicates whether the content of the associated byte of TDATA
-                                               // is processed as a data byte or a position byte. For a 64-bit
-                                               // DATA, bit 0 corresponds to the least significant byte on
-                                               // DATA, and bit 0 corresponds to the least significant byte on
-                                               // DATA, and bit 7 corresponds to the most significant byte. For
-                                               // example: STROBE[0] = 1b, DATA[7:0] is valid STROBE[7] = 0b,
-                                               // DATA[63:56] is not valid
+      .overflow(),           // 1-bit output: Overflow: This signal indicates that a write request
+                                     // (wren) during the prior clock cycle was rejected, because the FIFO is
+                                     // full. Overflowing the FIFO is not destructive to the contents of the
+                                     // FIFO.
 
-      .m_axis_tuser(),             // TUSER_WIDTH-bit output: TUSER: The user-defined sideband
-                                               // information that can be transmitted alongside the data
-                                               // stream.
+      .prog_empty(),       // 1-bit output: Programmable Empty: This signal is asserted when the
+                                     // number of words in the FIFO is less than or equal to the programmable
+                                     // empty threshold value. It is de-asserted when the number of words in
+                                     // the FIFO exceeds the programmable empty threshold value.
 
-      .m_axis_tvalid(s_valid),           // 1-bit output: TVALID: Indicates that the master is driving a
-                                               // valid transfer. A transfer takes place when both TVALID and
-                                               // TREADY are asserted
+      .prog_full(),         // 1-bit output: Programmable Full: This signal is asserted when the
+                                     // number of words in the FIFO is greater than or equal to the
+                                     // programmable full threshold value. It is de-asserted when the number of
+                                     // words in the FIFO is less than the programmable full threshold value.
 
-      .prog_empty_axis(),       // 1-bit output: Programmable Empty- This signal is asserted
-                                               // when the number of words in the FIFO is less than or equal to
-                                               // the programmable empty threshold value. It is de-asserted
-                                               // when the number of words in the FIFO exceeds the programmable
-                                               // empty threshold value.
+      .rd_data_count(), // RD_DATA_COUNT_WIDTH-bit output: Read Data Count: This bus indicates the
+                                     // number of words read from the FIFO.
 
-      .prog_full_axis(),         // 1-bit output: Programmable Full: This signal is asserted when
-                                               // the number of words in the FIFO is greater than or equal to
-                                               // the programmable full threshold value. It is de-asserted when
-                                               // the number of words in the FIFO is less than the programmable
-                                               // full threshold value.
+      .rd_rst_busy(rd_rst_busy),     // 1-bit output: Read Reset Busy: Active-High indicator that the FIFO read
+                                     // domain is currently in a reset state.
 
-      .rd_data_count_axis(), // RD_DATA_COUNT_WIDTH-bit output: Read Data Count- This bus
-                                               // indicates the number of words available for reading in the
-                                               // FIFO.
+      .sbiterr(),             // 1-bit output: Single Bit Error: Indicates that the ECC decoder detected
+                                     // and fixed a single-bit error.
 
-      .s_axis_tready(fifo_axis_ready),           // 1-bit output: TREADY: Indicates that the slave can accept a
-                                               // transfer in the current cycle.
+      .underflow(),         // 1-bit output: Underflow: Indicates that the read request (rd_en) during
+                                     // the previous clock cycle was rejected because the FIFO is empty. Under
+                                     // flowing the FIFO is not destructive to the FIFO.
 
-      .sbiterr_axis(),             // 1-bit output: Single Bit Error- Indicates that the ECC
-                                               // decoder detected and fixed a single-bit error.
+      .wr_ack(),               // 1-bit output: Write Acknowledge: This signal indicates that a write
+                                     // request (wr_en) during the prior clock cycle is succeeded.
 
-      .wr_data_count_axis(), // WR_DATA_COUNT_WIDTH-bit output: Write Data Count: This bus
-                                               // indicates the number of words written into the FIFO.
+      .wr_data_count(), // WR_DATA_COUNT_WIDTH-bit output: Write Data Count: This bus indicates
+                                     // the number of words written into the FIFO.
 
-      .injectdbiterr_axis(1'b0), // 1-bit input: Double Bit Error Injection- Injects a double bit
-                                               // error if the ECC feature is used.
+      .wr_rst_busy(wr_rst_busy),     // 1-bit output: Write Reset Busy: Active-High indicator that the FIFO
+                                     // write domain is currently in a reset state.
 
-      .injectsbiterr_axis(1'b0), // 1-bit input: Single Bit Error Injection- Injects a single bit
-                                               // error if the ECC feature is used.
+      .din(din),                     // WRITE_DATA_WIDTH-bit input: Write Data: The input data bus used when
+                                     // writing the FIFO.
 
-      .m_aclk(m_aclk),                         // 1-bit input: Master Interface Clock: All signals on master
-                                               // interface are sampled on the rising edge of this clock.
+      .injectdbiterr(1'b0), // 1-bit input: Double Bit Error Injection: Injects a double bit error if
+                                     // the ECC feature is used on block RAMs or UltraRAM macros.
 
-      .m_axis_tready(s_ready),           // 1-bit input: TREADY: Indicates that the slave can accept a
-                                               // transfer in the current cycle.
+      .injectsbiterr(1'b0), // 1-bit input: Single Bit Error Injection: Injects a single bit error if
+                                     // the ECC feature is used on block RAMs or UltraRAM macros.
 
-      .s_aclk(clk),                         // 1-bit input: Slave Interface Clock: All signals on slave
-                                               // interface are sampled on the rising edge of this clock.
+      .rd_clk(mac_tx_gmii_clk),               // 1-bit input: Read clock: Used for read operation. rd_clk must be a free
+                                     // running clock.
 
-      .s_aresetn(!rst),                   // 1-bit input: Active low asynchronous reset.
-      .s_axis_tdata({fifo_axis_last, fifo_axis_data}),             // TDATA_WIDTH-bit input: TDATA: The primary payload that is
-                                               // used to provide the data that is passing across the
-                                               // interface. The width of the data payload is an integer number
-                                               // of bytes.
+      .rd_en(rd_en),                 // 1-bit input: Read Enable: If the FIFO is not empty, asserting this
+                                     // signal causes data (on dout) to be read from the FIFO. Must be held
+                                     // active-low when rd_rst_busy is active high.
 
-      .s_axis_tdest(1'b0),             // TDEST_WIDTH-bit input: TDEST: Provides routing information
-                                               // for the data stream.
+      .rst(rst),                     // 1-bit input: Reset: Must be synchronous to wr_clk. The clock(s) can be
+                                     // unstable at the time of applying reset, but reset must be released only
+                                     // after the clock(s) is/are stable.
 
-      .s_axis_tid(1'b0),                 // TID_WIDTH-bit input: TID: The data stream identifier that
-                                               // indicates different streams of data.
+      .sleep(1'b0),                 // 1-bit input: Dynamic power saving: If sleep is High, the memory/fifo
+                                     // block is in power saving mode.
 
-      .s_axis_tkeep(1'b1),             // TDATA_WIDTH/8-bit input: TKEEP: The byte qualifier that
-                                               // indicates whether the content of the associated byte of TDATA
-                                               // is processed as part of the data stream. Associated bytes
-                                               // that have the TKEEP byte qualifier deasserted are null bytes
-                                               // and can be removed from the data stream. For a 64-bit DATA,
-                                               // bit 0 corresponds to the least significant byte on DATA, and
-                                               // bit 7 corresponds to the most significant byte. For example:
-                                               // KEEP[0] = 1b, DATA[7:0] is not a NULL byte KEEP[7] = 0b,
-                                               // DATA[63:56] is a NULL byte
+      .wr_clk(clk),               // 1-bit input: Write clock: Used for write operation. wr_clk must be a
+                                     // free running clock.
 
-      .s_axis_tlast(fifo_axis_last),             // 1-bit input: TLAST: Indicates the boundary of a packet.
-      .s_axis_tstrb(1'b1),             // TDATA_WIDTH/8-bit input: TSTRB: The byte qualifier that
-                                               // indicates whether the content of the associated byte of TDATA
-                                               // is processed as a data byte or a position byte. For a 64-bit
-                                               // DATA, bit 0 corresponds to the least significant byte on
-                                               // DATA, and bit 0 corresponds to the least significant byte on
-                                               // DATA, and bit 7 corresponds to the most significant byte. For
-                                               // example: STROBE[0] = 1b, DATA[7:0] is valid STROBE[7] = 0b,
-                                               // DATA[63:56] is not valid
+      .wr_en(wr_en)                  // 1-bit input: Write Enable: If the FIFO is not full, asserting this
+                                     // signal causes data (on din) to be written to the FIFO. Must be held
+                                     // active-low when rst or wr_rst_busy is active high.
 
-      .s_axis_tuser(1'b0),             // TUSER_WIDTH-bit input: TUSER: The user-defined sideband
-                                               // information that can be transmitted alongside the data
-                                               // stream.
-
-      .s_axis_tvalid(fifo_axis_valid)            // 1-bit input: TVALID: Indicates that the master is driving a
-                                               // valid transfer. A transfer takes place when both TVALID and
-                                               // TREADY are asserted
    );
         end
 endgenerate

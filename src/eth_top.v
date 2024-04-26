@@ -5,7 +5,7 @@ module eth_top #(
     parameter CLK_90     = "TRUE"       ,
     parameter FLUSH_TIME = 32'hFFFF_FFFF,
     parameter USE_FLUSH  = "TRUE"       ,
-    parameter RERNW_TIME = 15'hFFFF         
+    parameter RERNW_TIME = 16'hFFFF         
 ) (
     input         clk              ,
     input         rst              ,
@@ -23,6 +23,7 @@ module eth_top #(
     input  [31:0] cfg_src_ip       ,
     input  [31:0] cfg_dst_ip       ,
     input  [10:0] cfg_udp_len      ,
+    input  [47:0] cfg_src_mac      ,
 
     output [ 7:0] m_udp_axis_data  ,
     output        m_udp_axis_valid ,
@@ -140,8 +141,8 @@ gmii_axis#(
     .clk              (clk              ),
     .rst              (rst              ),
 
-    .mac_rx_gmii_clk  (m_mac_gmii_data  ),
-    .mac_rx_gmii_data (m_mac_gmii_clk   ),
+    .mac_rx_gmii_clk  (m_mac_gmii_clk   ),
+    .mac_rx_gmii_data (m_mac_gmii_data  ),
     .mac_rx_gmii_dv   (m_mac_gmii_dv    ),
     .mac_rx_gmii_err  (m_mac_gmii_err   ),    
     .m_eth_axis_data  (m_eth_axis_data  ),
@@ -293,6 +294,7 @@ ip ip_inst(
     .cfg_src_ip            (cfg_src_ip        ),
     .cfg_dst_ip            (cfg_dst_ip        ),
     .cfg_udp_len           (cfg_udp_len       ),
+    .cfg_src_mac           (cfg_src_mac       ),
 
     .s_mac_src_mac         (m_ip_mac_src_mac   ),
     .s_mac_dst_mac         (m_ip_mac_dst_mac   ),
@@ -309,8 +311,8 @@ ip ip_inst(
     .m_mac_axis_valid      (s_ip_mac_axis_valid),
     .m_mac_axis_last       (s_ip_mac_axis_last ),
     .m_mac_axis_ready      (s_ip_mac_axis_ready),
-    .m_mac_req             (s_ip_mac_axis_grant),
-    .m_mac_grant           (s_ip_mac_axis_req  ),
+    .m_mac_req             (s_ip_mac_axis_req  ),
+    .m_mac_grant           (s_ip_mac_axis_grant),
 
     .m_arp_query_ready     (query_ready        ),
     .m_arp_query_valid     (query_valid        ),

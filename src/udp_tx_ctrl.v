@@ -89,7 +89,7 @@ assign s_udp_axis_ready = udp_ping == 1'b0 ? udp_ping_ready : udp_pang_ready;
 assign udp_ping_grant = ip_ping == 1'b0 ? m_ip_grant : 1'b0;
 assign udp_pang_grant = ip_ping == 1'b1 ? m_ip_grant : 1'b0;
 
-assign m_ip_req = ip_ping == 1'b0 : udp_ping_req : udp_pang_req;
+assign m_ip_req = ip_ping == 1'b0 ? udp_ping_req : udp_pang_req;
 
 assign m_ip_axis_data  = ip_ping == 1'b0 ? ip_ping_data  : ip_pang_data ;
 assign m_ip_axis_valid = ip_ping == 1'b0 ? ip_ping_valid : ip_pang_valid;

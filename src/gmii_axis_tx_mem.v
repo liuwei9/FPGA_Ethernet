@@ -30,7 +30,7 @@ reg  [10:0] raddr;
 wire [8:0]  rdata;
 reg         ren_ff  ;
 reg         ren_2ff ;
-reg  [8:0]  rdata_ff;
+reg  [7:0]  rdata_ff;
 reg         r_last  ;
 
 reg         s_ready_r;
@@ -136,7 +136,7 @@ always @(posedge clk ) begin
 end
 
 always @(posedge clk ) begin
-    rdata_ff <= rdata;
+    rdata_ff <= rdata[7:0];
 end
 
 always @(posedge clk ) begin

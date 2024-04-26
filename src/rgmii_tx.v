@@ -23,6 +23,8 @@ generate
     end
 endgenerate
 
+assign phy_rgmii_clk = mac_gmii_clk;
+
 generate
     if(DEVICE == "XILINX")begin
         oddr #(
