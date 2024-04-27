@@ -133,7 +133,7 @@ always @(posedge clk ) begin
         if(curr_state == IDLE)begin
             src_mac <= 48'd0;
         end
-        else if((cnt > 11'd13) && (cnt <= 11'd19))begin
+        else if((cnt > 11'd12) && (cnt <= 11'd18))begin
             src_mac <= {src_mac[39:0], s_eth_axis_data};
         end
     end
@@ -147,7 +147,7 @@ always @(posedge clk ) begin
         if(curr_state == IDLE)begin
             op_len <= 16'd0;
         end
-        else if((cnt > 11'd19) && (cnt <= 11'd20))begin
+        else if((cnt > 11'd18) && (cnt <= 11'd20))begin
             op_len <= {op_len[7:0], s_eth_axis_data};
         end
     end
@@ -189,7 +189,7 @@ always @(posedge clk ) begin
         last <= 1'b0;
     end
     else begin
-        last <= (curr_state == DATA) && (next_state == IDLE);
+        last <= (curr_state == DATA) && (next_state == WAIT);
     end
 end
 
