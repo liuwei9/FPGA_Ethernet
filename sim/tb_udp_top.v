@@ -48,7 +48,7 @@ wire       send_last ;
 initial begin
     clk_200 = 1'b0;
     forever begin
-        clk_200 = #5 clk_200;
+        clk_200 = #5 ~clk_200;
     end
 end
 
