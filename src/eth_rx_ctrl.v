@@ -58,10 +58,7 @@ always @(posedge clk ) begin
         op <= 4'd0;
     end
     else begin
-        if((s_mac_axis_last == 1'b1) || (s_mac_axis_error == 1'b1))begin
-            op <= 4'd0;
-        end
-        else if (s_mac_axis_valid == 1'b1)begin
+        if(s_mac_axis_valid == 1'b1)begin
             case(s_mac_op_len)
             16'h0806: begin
                 op <= ARP;
@@ -70,9 +67,6 @@ always @(posedge clk ) begin
                 op <= IP;
             end
             endcase
-        end
-        else begin
-            op <= 4'd0;
         end
     end
 end

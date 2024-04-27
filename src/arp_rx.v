@@ -177,7 +177,7 @@ always @(posedge clk ) begin
         resp <= 1'b0;
     end
     else begin
-        if((cnt == 6'd28) && (req == 1'b0) && (dst_ip == cfg_ip) && (op == 16'd2))begin
+        if((cnt == 6'd28) && (resp == 1'b0) && (dst_ip == cfg_ip) && (op == 16'd2))begin
             resp <= 1'b1;
         end
         else if((resp_ready == 1'b1) || (cnt == 6'd1))begin
