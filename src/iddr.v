@@ -19,7 +19,7 @@ generate
                 .DDR_CLK_EDGE("SAME_EDGE_PIPELINED"),
                 .INIT_Q1(1'b0), // Initial value of Q1: 1'b0 or 1'b1
                 .INIT_Q2(1'b0), // Initial value of Q2: 1'b0 or 1'b1
-                .SRTYPE("ASYNC")
+                .SRTYPE("SYNC")
                 )
                 iddr_inst (
                     .Q1(q1[i]),

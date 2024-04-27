@@ -417,8 +417,8 @@ always @(posedge clk ) begin
     else begin
         if(curr_state == WAIT)begin
             m_ip_axis_len_r <= cfg_udp_len_r;
-            m_ip_src_ip_r   <= cfg_udp_src_port_r;
-            m_ip_dst_ip_r   <= cfg_udp_dst_port_r;
+            m_ip_src_ip_r   <= cfg_src_ip_r ;
+            m_ip_dst_ip_r   <= cfg_dst_ip_r ;
         end
     end
 end

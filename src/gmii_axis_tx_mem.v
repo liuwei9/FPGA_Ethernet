@@ -108,7 +108,7 @@ always @(posedge clk ) begin
     end
 end
 
-assign ren = (curr_state == READ) && (rdata[8] == 1'b0);
+assign ren = (curr_state == READ);
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
@@ -116,7 +116,7 @@ always @(posedge clk ) begin
         ren_2ff <= 1'b0;
     end
     else begin
-        ren_ff  <= ren   ;
+        ren_ff  <= ren;
         ren_2ff <= ren_ff;
     end
 end
@@ -154,7 +154,7 @@ always @(posedge clk ) begin
 end
 
 assign m_data  = rdata_ff[7:0];
-assign m_valid = ren_2ff      ;
+assign m_valid = ren_2ff  &  ren_ff   ;
 assign m_last  = r_last       ;
 
 always @(posedge clk ) begin

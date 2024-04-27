@@ -1,18 +1,19 @@
+`timescale  1ns/1ns 
 module tb_udp_top (
 );
 
 parameter CLOCK_BUFF = "BUFG"       ;
 parameter DEVICE     = "XILINX"     ;
 parameter IDDR_PRIM  = "IODDR"      ;
-parameter CLK_90     = "TRUE"       ;
+parameter CLK_90     = "FALSE"       ;
 parameter FLUSH_TIME = 32'hFFFF_FFFF;
 parameter USE_FLUSH  = "TRUE"       ;
 parameter RERNW_TIME = 16'hFFFF     ;
 
 reg clk_200;
 wire rst;
-wire locked;
-wire clk_out1;
+reg locked;
+reg clk_out1;
 wire clk_out2;
 
 wire        phy_rgmii_rx_clk ;
@@ -48,9 +49,24 @@ wire       send_last ;
 initial begin
     clk_200 = 1'b0;
     forever begin
-        clk_200 = #5 ~clk_200;
+        clk_200 = #2.5 ~clk_200;
     end
 end
+
+initial begin
+    clk_out1 = 1'b0;
+    forever begin
+        clk_out1 = #4 ~clk_out1;
+    end
+end
+
+initial begin
+    locked = 1'b0;
+    #100
+    locked = 1'b1;
+end
+
+assign clk_out2 = clk_out1;
 
 assign rst = !locked;
 
@@ -161,16 +177,16 @@ assign s_udp_axis_last  = send_last ;
 //----------------------------------------------------------------------------
 // __primary_________200.000____________0.010
 
-clk_wiz_0 clk_wiz_0_inst
-   (
-    // Clock out ports
-    .clk_out1(clk_out1),     // output clk_out1 125MHz 0°
-    .clk_out2(clk_out2),     // output clk_out2 125MHz 90°
-    // Status and control signals
-    .locked(locked),       // output locked
-   // Clock in ports
-    .clk_in1(clk_200)      // input clk_in1 200MHz
-);
+// clk_wiz_0 clk_wiz_0_inst
+//    (
+//     // Clock out ports
+//     .clk_out1(clk_out1),     // output clk_out1 125MHz 0°
+//     .clk_out2(clk_out2),     // output clk_out2 125MHz 90°
+//     // Status and control signals
+//     .locked(locked),       // output locked
+//    // Clock in ports
+//     .clk_in1(clk_200)      // input clk_in1 200MHz
+// );
 
 eth_top #(
     .CLOCK_BUFF (CLOCK_BUFF),
@@ -182,8 +198,8 @@ eth_top #(
     .RERNW_TIME (RERNW_TIME)    
 ) eth_top_inst (
     .clk              (clk_out1),
-    .rst              (clk_out2),
-    .clk90            (rst     ),
+    .rst              (rst     ),
+    .clk90            (clk_out2),
 
     .phy_rgmii_rx_clk (phy_rgmii_rx_clk ),
     .phy_rgmii_rx_ctl (phy_rgmii_rx_ctl ),

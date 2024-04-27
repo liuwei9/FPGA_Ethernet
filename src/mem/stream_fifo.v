@@ -24,13 +24,16 @@ reg [ADDR_WIDTH - 1:0] cnt;
 reg [ADDR_WIDTH - 1:0] raddr;
 reg [ADDR_WIDTH - 1:0] waddr;
 wire                   ren  ;
-wire m_fire;
-reg [WD:0] rdata;
 
-reg            m_valid_r;
+wire [WD:0] rdata;
 
-assign m_fire = (m_valid == 1'b1) && (m_ready == 1'b1);
-assign ren = (m_valid == 1'b0) || ((m_valid == 1'b1) && (m_ready == 1'b1)) && (cnt > {ADDR_WIDTH{1'b0}});
+wire [WD:0] pipe_s_data ;
+wire        pipe_s_valid;
+wire        pipe_s_ready;
+wire        pipe_s_fire ;
+wire [WD:0] pipe_m_data ;
+wire        pipe_m_valid;
+wire        pipe_m_ready;
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
@@ -68,10 +71,10 @@ always @(posedge clk ) begin
         cnt <= {ADDR_WIDTH{1'b0}};
     end
     else begin
-        if((s_valid == 1'b1) && (m_fire == 1'b0))begin
+        if((s_valid == 1'b1) && (pipe_s_fire == 1'b0))begin
             cnt <= cnt + 1'b1;
         end
-        else if((s_valid == 1'b0) && (m_fire == 1'b1))begin
+        else if((s_valid == 1'b0) && (pipe_s_fire == 1'b1))begin
             cnt <= cnt - 1'b1;
         end
     end
@@ -82,46 +85,35 @@ always @(posedge clk ) begin
         raddr <= {ADDR_WIDTH{1'b0}};
     end
     else begin
-        if(ren == 1'b1)begin
+        if(pipe_s_fire == 1'b1)begin
             raddr <= raddr + 1'b1;
         end
     end
 end
 
-always @(posedge clk ) begin
-    if(rst == 1'b1)begin
-        rdata <= {WD{1'b0}};
-    end
-    else begin
-        if(ren == 1'b1)begin
-            rdata <= mem[raddr];
-        end
-        else begin
-            rdata <= {WD{1'b0}};
-        end
-    end
-end
+assign rdata = mem[raddr];
 
-always @(posedge clk ) begin
-    if(rst == 1'b1)begin
-        m_valid_r <= 1'b0;
-    end
-    else begin
-        if(ren == 1'b1)begin
-            m_valid_r <= 1'b1;
-        end
-        else begin
-            if(m_valid_r == 1'b1)begin
-                if(m_ready == 1'b1)begin
-                    m_valid_r <= 1'b0;
-                end
-            end
-        end
-    end
-end
+assign pipe_s_data  = rdata;
+assign pipe_s_valid = ren;
+assign ren = (cnt > 0);
 
-assign m_data  = rdata[WD - 2 : 0];
-assign m_valid = m_valid_r;
-assign m_last  = rdata[WD - 1];
+assign m_data  = pipe_m_data[WD - 1 : 0];
+assign m_valid = pipe_m_valid;
+assign m_last  = pipe_m_valid == 1'b1 ? pipe_m_data[WD] : 1'b0;
+assign pipe_m_ready = m_ready;
+assign pipe_s_fire = (pipe_s_valid == 1'b1) && (pipe_s_ready == 1'b1);
+
+stream_pipe #(
+  .DATA_WIDTH 	(WD + 1)	
+) stream_pipe_inst (
+  .dataIn_valid   (pipe_s_valid),
+  .dataIn_ready   (pipe_s_ready),
+  .dataIn_payload (pipe_s_data ),
+  .dataOut_valid  (pipe_m_valid),
+  .dataOut_ready  (pipe_m_ready),
+  .dataOut_payload(pipe_m_data ),
+  .clk            (clk    ),
+  .reset          (rst    )         
+);
 
 endmodule
