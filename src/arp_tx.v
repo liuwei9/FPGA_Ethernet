@@ -126,10 +126,10 @@ end
 always @(posedge clk ) begin
     if((arp_tx_valid == 1'b1) && (arp_tx_ready == 1'b1))begin
         pre_data <= {8'h01, 8'h08, 8'h00, 8'h06, 8'h04, 8'h00, {6'b0, arp_tx_op}};
-//        src_mac  <= cfg_mac;
-//        dst_mac  <= arp_tx_mac;
-//        src_ip   <= cfg_ip;
-//        dst_ip   <= arp_tx_ip;
+        src_mac  <= cfg_mac;
+        dst_mac  <= arp_tx_mac;
+        src_ip   <= cfg_ip;
+        dst_ip   <= arp_tx_ip;
     end
 end
 
@@ -151,10 +151,10 @@ always @(posedge clk ) begin
     if(cnt == 5'd0)begin
         axis_data    <= 8'd0;
         pre_data_reg <= pre_data;
-        src_mac_reg  <= cfg_mac;
-        dst_mac_reg  <= arp_tx_mac;
-        src_ip_reg   <= cfg_ip;
-        dst_ip_reg   <= arp_tx_ip;
+        src_mac_reg  <= src_mac;
+        dst_mac_reg  <= dst_mac;
+        src_ip_reg   <= src_ip;
+        dst_ip_reg   <= dst_ip;
     end
     else if((cnt >= 5'd1) && (cnt < 5'd8))begin
         axis_data    <= pre_data_reg[55 -: 8];
