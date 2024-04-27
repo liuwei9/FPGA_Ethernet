@@ -22,7 +22,7 @@ end
 
 arbiter_base # (
     .REQ_NUM (REQ_NUM)
-) (
+) arbiter_base_inst (
     .req     (req  ),
     .base    (temp ),
     .grant   (grant) 

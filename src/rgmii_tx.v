@@ -31,7 +31,7 @@ generate
             .DEVICE     (DEVICE   ),
             .IDDR_PRIM  (IDDR_PRIM),
             .DATA_WIDTH (5        )
-        ) (
+        ) oddr_inst (
             .clk        (mac_gmii_clk),
             .d1         ({mac_gmii_data[3:0], mac_gmii_dv}),
             .d2         ({mac_gmii_data[7:4], mac_gmii_dv}),
