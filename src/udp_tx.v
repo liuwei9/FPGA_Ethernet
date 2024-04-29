@@ -37,13 +37,15 @@ localparam READ  = 7'b1000000;
 reg [6:0] curr_state;
 reg [6:0] next_state;
 
-wire [ 8:0] wdata;
+wire [ 7:0] wdata;
 wire        wen  ;
 reg  [10:0] waddr;
 wire        ren  ;
 reg  [10:0] raddr;
-wire [ 8:0] rdata;
+wire [ 7:0] rdata;
 reg         ren_ff;
+reg  [10:0] r_len;
+reg         r_last;
 
 reg  [ 3:0] wait_cnt;
 
@@ -98,6 +100,7 @@ always @(posedge clk ) begin
         cfg_src_ip_r       <= cfg_src_ip      ;
         cfg_dst_ip_r       <= cfg_dst_ip      ;
         cfg_udp_len_r      <= cfg_udp_len + 11'd8   ;
+        r_len              <= cfg_udp_len - 11'd1   ;
     end
 end
 
@@ -161,7 +164,7 @@ always @(*) begin
             end
         end
         READ: begin
-            if((ren_ff == 1'b1) && (rdata[8] == 1'b1))begin
+            if((ren == 1'b1) && (raddr == r_len))begin
                 next_state = IDLE;
             end
             else begin
@@ -189,7 +192,7 @@ always @(posedge clk ) begin
 end
 
 assign wen = s_udp_axis_valid;
-assign wdata = {s_udp_axis_last, s_udp_axis_data};
+assign wdata = s_udp_axis_data;
 assign s_udp_axis_ready = (curr_state == IDLE) || (curr_state == WRITE);
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
@@ -207,7 +210,7 @@ always @(posedge clk ) begin
     end
 end
 
-assign ren = ((curr_state == READ) && (rdata[8] == 1'b0));
+assign ren = (curr_state == READ);
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
         ren_ff <= 1'b0;
@@ -372,14 +375,23 @@ end
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
+        r_last <= 1'b0;
+    end
+    else begin
+        r_last <= (ren == 1'b1) && (raddr == r_len);
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
         udp_data <= 8'd0;
         udp_data_valid <= 1'b0;
         udp_data_last  <= 1'b0;
     end
     else begin
-        udp_data <= ren_ff;
-        udp_data_valid <= rdata[7:0];
-        udp_data_last  <= rdata[8];
+        udp_data <= rdata[7:0];
+        udp_data_valid <= ren_ff;
+        udp_data_last  <= r_last;
     end
 end
 
@@ -432,7 +444,7 @@ assign m_ip_dst_ip     = m_ip_dst_ip_r    ;
 
 tpram #(
     .DP    (2048),
-    .WD    (9   )
+    .WD    (8   )
 ) tpram_inst (
     .clk   (clk  ),
     .wdata (wdata),
