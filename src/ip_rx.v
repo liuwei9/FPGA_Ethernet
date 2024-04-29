@@ -96,7 +96,7 @@ always @(posedge clk ) begin
     end
     else begin
         if((s_mac_axis_valid == 1'b1) && ((cnt >= 12'd16) && (cnt <= 12'd19)))begin
-            dst_ip <= {s_mac_axis_data, dst_ip[31:24]};
+            dst_ip <= {dst_ip[24:0], s_mac_axis_data};
         end
     end
 end

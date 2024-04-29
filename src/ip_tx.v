@@ -62,9 +62,9 @@ reg [31:0] m_arp_query_ip_r    ;
 
 reg        s_udp_ip_axis_ready_r;
 
-reg [ 7:0] s_ip_axis_data_ff [20:0]; 
-reg [20:0] s_ip_axis_valid_ff      ;
-reg [20:0] s_ip_axis_last_ff       ;
+reg [ 7:0] s_ip_axis_data_ff [23:0]; 
+reg [23:0] s_ip_axis_valid_ff      ;
+reg [23:0] s_ip_axis_last_ff       ;
 
 reg [ 7:0] s_ip_protocol_r;
 reg [15:0] s_ip_len_r     ;
@@ -128,7 +128,7 @@ always @(*)begin
             end
         end
         UDP_DATA: begin
-            if((s_udp_ip_axis_last == 1'b1) && (s_udp_ip_axis_valid == 1'b1))begin
+            if((m_mac_axis_last == 1'b1) && (m_mac_axis_valid == 1'b1))begin
                 next_state = IDLE;
             end
             else begin
@@ -248,20 +248,20 @@ assign m_arp_query_ip    = m_arp_query_ip_r   ;
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
         s_ip_axis_data_ff[0] <= 8'b0;
-        s_ip_axis_valid_ff   <= 21'b0;
-        s_ip_axis_last_ff    <= 21'b0;
+        s_ip_axis_valid_ff   <= 24'b0;
+        s_ip_axis_last_ff    <= 24'b0;
     end
     else begin
         if(curr_state == UDP_DATA)begin
             s_ip_axis_data_ff[0] <= s_udp_ip_axis_data ;
-            s_ip_axis_valid_ff   <= {s_ip_axis_valid_ff[19:0], s_udp_ip_axis_valid};
-            s_ip_axis_last_ff    <= {s_ip_axis_last_ff [19:0], s_udp_ip_axis_last };
+            s_ip_axis_valid_ff   <= {s_ip_axis_valid_ff[22:0], s_udp_ip_axis_valid};
+            s_ip_axis_last_ff    <= {s_ip_axis_last_ff [22:0], s_udp_ip_axis_last };
         end      
     end
 end
 
 generate
-    for (i = 0; i < 20; i = i + 1) begin : LOOP_UDP_DATA
+    for (i = 0; i < 23; i = i + 1) begin : LOOP_UDP_DATA
         always @(posedge clk ) begin
             s_ip_axis_data_ff[i + 1] <= s_ip_axis_data_ff[i];
         end
@@ -356,7 +356,8 @@ end
 always @(posedge clk ) begin
     m_mac_src_mac_r <= cfg_mac;
     m_mac_dst_mac_r <= dst_mac;
-    m_mac_op_len_r  <= s_ip_len_r;
+    m_mac_op_len_r  <= 16'h0800;
+    
 end
 
 always @(posedge clk ) begin
@@ -364,13 +365,11 @@ always @(posedge clk ) begin
         send_cnt <= 5'd0;
     end
     else begin
-        if(s_ip_axis_valid_ff[1] == 1'b1)begin
-            if(send_cnt < 5'd23)begin
-                send_cnt <= send_cnt + 5'd1;
-            end
+        if((s_ip_axis_valid_ff[1] == 1'b1) && (send_cnt == 5'd0))begin
+            send_cnt <= 5'd1;
         end
-        else begin
-            send_cnt <= 5'd0;
+        else if((send_cnt < 5'd23) && (send_cnt > 5'd0))begin
+                send_cnt <= send_cnt + 5'd1;
         end
     end
 end
@@ -384,27 +383,26 @@ always @(posedge clk ) begin
     end
     else begin
         if((s_ip_axis_valid_ff[0] == 1'b1) && (s_ip_axis_valid_ff[1] == 1'b0))begin
-            data_temp <= {16'h4500, s_ip_len_r, index, 16'h4000, fcs_protocol[15:0], 16'h0000, s_ip_src_ip_r, s_ip_dst_ip_r};
+            data_temp <= {16'h4500, s_ip_len_r, {8'd0, index}, 16'h4000, {8'h40, s_ip_protocol_r}, 16'h0000, s_ip_src_ip_r, s_ip_dst_ip_r};
         end
-        if((s_ip_axis_valid_ff[1] == 1'b1) && (send_cnt < 5'd20))begin
+        if((send_cnt >= 5'd1) && (send_cnt < 5'd21))begin
             data_temp <= data_temp << 4'd8;
-            if(send_cnt == 5'd10)begin
+            if(send_cnt == 5'd11)begin
                 m_mac_axis_data_r  <= fcs[15:8];
             end
-            else if(send_cnt == 5'd11)begin
+            else if(send_cnt == 5'd12)begin
                 m_mac_axis_data_r  <= fcs[7:0];
             end
             else begin
                 m_mac_axis_data_r  <= data_temp[159 -: 8];
             end
-            m_mac_axis_data_r  <= 8'd0;
             m_mac_axis_valid_r <= 1'd1;
             m_mac_axis_last_r  <= 1'd0;
         end
         else begin
-            m_mac_axis_data_r  <= s_ip_axis_data_ff [20];
-            m_mac_axis_valid_r <= s_ip_axis_valid_ff[20];
-            m_mac_axis_last_r  <= s_ip_axis_last_ff [20];
+            m_mac_axis_data_r  <= s_ip_axis_data_ff [23];
+            m_mac_axis_valid_r <= s_ip_axis_valid_ff[23];
+            m_mac_axis_last_r  <= s_ip_axis_last_ff [23];
         end
     end
 end
