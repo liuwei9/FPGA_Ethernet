@@ -158,7 +158,6 @@ always @(posedge clk ) begin
             arp_cache_r_valid <= 1'b1;
         end
         else begin
-            arp_cache_r_ip <= 32'd0;
             arp_cache_r_valid <= 1'b0;
         end
     end

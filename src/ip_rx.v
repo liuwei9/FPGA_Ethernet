@@ -47,10 +47,10 @@ always @(posedge clk ) begin
         s_mac_axis_last_ff  <= 1'd0;
         s_mac_axis_error_ff <= 1'd0;
 
-        s_mac_axis_data_2ff  <= 8'd0;
-        s_mac_axis_valid_2ff <= 1'd0;
-        s_mac_axis_last_2ff  <= 1'd0;
-        s_mac_axis_error_2ff <= 1'd0;
+        // s_mac_axis_data_2ff  <= 8'd0;
+        // s_mac_axis_valid_2ff <= 1'd0;
+        // s_mac_axis_last_2ff  <= 1'd0;
+        // s_mac_axis_error_2ff <= 1'd0;
     end
     else begin
         s_mac_axis_data_ff  <= s_mac_axis_data ;
@@ -58,10 +58,10 @@ always @(posedge clk ) begin
         s_mac_axis_last_ff  <= s_mac_axis_last ;
         s_mac_axis_error_ff <= s_mac_axis_error;
 
-        s_mac_axis_data_2ff  <= s_mac_axis_data_ff ;
-        s_mac_axis_valid_2ff <= s_mac_axis_valid_ff;
-        s_mac_axis_last_2ff  <= s_mac_axis_last_ff ;
-        s_mac_axis_error_2ff <= s_mac_axis_error_ff;
+        // s_mac_axis_data_2ff  <= s_mac_axis_data_ff ;
+        // s_mac_axis_valid_2ff <= s_mac_axis_valid_ff;
+        // s_mac_axis_last_2ff  <= s_mac_axis_last_ff ;
+        // s_mac_axis_error_2ff <= s_mac_axis_error_ff;
     end
 end
 
@@ -110,7 +110,7 @@ always @(posedge clk ) begin
             valid_flag <= 1'b1;
         end
         else begin
-            if((s_mac_axis_valid_2ff == 1'b0) || ((s_mac_axis_valid_2ff == 1'b1) && (s_mac_axis_last_2ff == 1'b1)))begin
+            if((s_mac_axis_valid_ff == 1'b0) || ((s_mac_axis_valid_ff == 1'b1) && (s_mac_axis_last_ff == 1'b1)))begin
                 valid_flag <= 1'b0;
             end
         end
@@ -128,10 +128,10 @@ always @(posedge clk ) begin
     else begin
         if(valid_flag == 1'b1)begin
             m_ip_protocol_r   <= protocol            ;
-            m_ip_axis_data_r  <= s_mac_axis_data_2ff ;
-            m_ip_axis_valid_r <= s_mac_axis_valid_2ff;
-            m_ip_axis_last_r  <= s_mac_axis_last_2ff ;
-            m_ip_axis_error_r <= s_mac_axis_error_2ff;
+            m_ip_axis_data_r  <= s_mac_axis_data_ff ;
+            m_ip_axis_valid_r <= s_mac_axis_valid_ff;
+            m_ip_axis_last_r  <= s_mac_axis_last_ff ;
+            m_ip_axis_error_r <= s_mac_axis_error_ff;
         end
         else begin
             m_ip_protocol_r   <= 8'b0;

@@ -16,27 +16,29 @@ module eth_mac_tx (
     output        m_eth_axis_last   
 );
 
-localparam IDLE  = 6'b000001;
-localparam RECV  = 6'b000010;
-localparam WAIT  = 6'b000100;
-localparam PRE   = 6'b001000;
-localparam SEND  = 6'b010000;
-localparam FCS   = 6'b100000;
+localparam IDLE  = 7'b0000001;
+localparam RECV  = 7'b0000010;
+localparam HEAD  = 7'b0000100;
+localparam WAIT  = 7'b0001000;
+localparam PRE   = 7'b0010000;
+localparam SEND  = 7'b0100000;
+localparam FCS   = 7'b1000000;
 
-reg [5:0] curr_state;
-reg [5:0] next_state;
+reg [6:0] curr_state;
+reg [6:0] next_state;
 
 genvar i;
-reg [ 7:0] s_mac_axis_data_ff[13:0] ;
-reg        s_mac_axis_valid_ff[13:0];
-reg        s_mac_axis_last_ff[13:0] ;
+reg [ 7:0] s_mac_axis_data_ff[14:0] ;
+reg        s_mac_axis_valid_ff[14:0];
+reg        s_mac_axis_last_ff[14:0] ;
 
 reg [ 3:0] pre_cnt ;
 reg [10:0] send_cnt;
 reg [10:0] recv_len;
 reg [ 1:0] fcs_cnt ;
 
-reg [103:0] eth_frame_head;
+reg [111:0] eth_frame_head;
+reg [3:0] head_cnt;
 
 reg  [ 7:0] wdata;
 reg         wen  ;
@@ -68,14 +70,22 @@ always @(*) begin
     case (curr_state)
         IDLE: begin
             if((s_mac_axis_ready == 1'b1) && (s_mac_axis_valid == 1'b1))begin
-                next_state = RECV;
+                next_state = HEAD;
             end
             else begin
                 next_state = IDLE;
             end
         end 
+        HEAD: begin
+            if(head_cnt == 4'd13)begin
+                next_state = RECV;
+            end
+            else begin
+                next_state = HEAD;
+            end
+        end
         RECV: begin
-            if((s_mac_axis_valid_ff[13] == 1'b1) && (s_mac_axis_last_ff[13] == 1'b1))begin
+            if((s_mac_axis_valid_ff[14] == 1'b1) && (s_mac_axis_last_ff[14] == 1'b1))begin
                 next_state = WAIT;
             end
             else begin
@@ -134,7 +144,7 @@ always @(posedge clk ) begin
 end
 
 generate
-    for (i = 1; i < 14; i = i + 1) begin
+    for (i = 1; i < 15; i = i + 1) begin
         always @(posedge clk ) begin
             if(rst == 1'b1)begin
                 s_mac_axis_data_ff[i]  <= 8'd0;
@@ -152,10 +162,24 @@ endgenerate
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
+        head_cnt <= 4'd0;
+    end
+    else begin
+        if(curr_state == HEAD)begin
+            head_cnt <= head_cnt + 4'd1;
+        end
+        else begin
+            head_cnt <= 4'd0;
+        end
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
         wen <= 1'b0;
     end
     else begin
-        if(((curr_state == IDLE) && (s_mac_axis_valid == 1'b1)) || (curr_state == RECV))begin
+        if((curr_state == HEAD) || (s_mac_axis_valid_ff[14] == 1'b1))begin
             wen <= 1'b1;
         end
         else begin
@@ -169,32 +193,34 @@ always @(posedge clk ) begin
         waddr <= 11'd0;
     end
     else begin
-        if(wen == 1'b1)begin
-            waddr <= waddr + 11'd1;
-        end
-        else begin
+        if(curr_state == WAIT)begin
             waddr <= 11'd0;
         end
+        else begin
+            if(wen == 1'b1)begin
+                waddr <= waddr + 11'd1;
+            end
+        end     
     end
 end
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
         wdata <= 8'd0;
-        eth_frame_head <= 104'd0;
+        eth_frame_head <= 112'd0;
     end
     else begin
         if((curr_state == IDLE) && (s_mac_axis_valid == 1'b1))begin
-            wdata <= s_mac_dst_mac[47 -: 8];
-            eth_frame_head <= {s_mac_dst_mac[39:0], s_mac_src_mac, s_mac_op_len};
+            wdata <= 8'd0;
+            eth_frame_head <= {s_mac_dst_mac, s_mac_src_mac, s_mac_op_len};
         end
         else begin
-            if((s_mac_axis_valid == 1'b1) && (s_mac_axis_valid_ff[13] == 1'b0))begin
-                wdata <= eth_frame_head[103 -: 8];
+            if(curr_state == HEAD)begin
+                wdata <= eth_frame_head[111 -: 8];
                 eth_frame_head <= eth_frame_head << 4'd8;
             end
             else begin
-                wdata <= s_mac_axis_data_ff[13];
+                wdata <= s_mac_axis_data_ff[14];
             end
         end
     end
