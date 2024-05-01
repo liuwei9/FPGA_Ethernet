@@ -24,7 +24,7 @@ wire        phy_rgmii_tx_ctl ;
 wire  [3:0] phy_rgmii_tx_data;
 
 wire [15:0] cfg_udp_src_port = 16'h1234;
-wire [15:0] cfg_udp_dst_port = 16'h5678;
+wire [15:0] cfg_udp_dst_port = 16'h1234;
 wire [31:0] cfg_src_ip       = {8'd192, 8'd168, 8'd1, 8'd2};
 wire [31:0] cfg_dst_ip       = {8'd192, 8'd168, 8'd1, 8'd2};
 wire [47:0] cfg_src_mac      = {8'h11, 8'h22, 8'h33, 8'h44, 8'h55, 8'h66};

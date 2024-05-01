@@ -235,6 +235,12 @@ always @(posedge clk ) begin
             end
         end
         else begin
+            if(curr_state == UDP_MAC)begin
+                if((s_arp_query_resp_valid == 1'b1) && (s_arp_query_resp_ip != s_ip_dst_ip_r))begin
+                    m_arp_query_valid_r <=  1'b1;
+                    m_arp_query_ip_r    <= s_udp_ip_dst_ip;
+                end
+            end
             if((m_arp_query_valid == 1'b1) && (m_arp_query_ready == 1'b1))begin
                 m_arp_query_valid_r <=  1'b0;
             end
@@ -369,7 +375,10 @@ always @(posedge clk ) begin
             send_cnt <= 5'd1;
         end
         else if((send_cnt < 5'd23) && (send_cnt > 5'd0))begin
-                send_cnt <= send_cnt + 5'd1;
+            send_cnt <= send_cnt + 5'd1;
+        end
+        else if((m_mac_axis_valid == 1'b1) && (m_mac_axis_last == 1'b1))begin
+            send_cnt <= 5'd0;
         end
     end
 end
