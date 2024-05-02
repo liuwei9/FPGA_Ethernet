@@ -7,6 +7,7 @@ module rgmii_phy #(
     input        clk              ,
     input        rst              ,
     input        clk90            ,
+    input        clk_200M         ,
 
     input        phy_rgmii_rx_clk ,
     input        phy_rgmii_rx_ctl ,
@@ -30,6 +31,7 @@ rgmii_rx #(
     .DEVICE      (DEVICE    ),
     .IDDR_PRIM   (IDDR_PRIM )
 ) rgmii_rx_inst (
+    .clk_200M       (clk_200M         ),
     .phy_rgmii_clk  (phy_rgmii_rx_clk ),
     .phy_rgmii_ctl  (phy_rgmii_rx_ctl ),
     .phy_rgmii_data (phy_rgmii_rx_data),

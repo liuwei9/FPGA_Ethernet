@@ -3,6 +3,7 @@ module rgmii_rx #(
     parameter DEVICE     = "XILINX",
     parameter IDDR_PRIM  = "IODDR" 
 ) (
+    input        clk_200M      ,
     input        phy_rgmii_clk ,
     input        phy_rgmii_ctl ,
     input  [3:0] phy_rgmii_data,
@@ -32,7 +33,8 @@ generate
             .IDDR_PRIM  (IDDR_PRIM),
             .DATA_WIDTH (5)
         ) iddr_inst (
-            .clk        (mac_gmii_clk),
+            .clk_200M   (clk_200M     ),
+            .clk        (phy_rgmii_clk),
             .d          ({phy_rgmii_data, phy_rgmii_ctl}),
         
             .q1         ({mac_gmii_data[3:0], ctrl1}),
