@@ -24,10 +24,6 @@ reg        s_mac_axis_valid_ff;
 reg        s_mac_axis_last_ff ;
 reg        s_mac_axis_error_ff;
 
-reg [ 7:0] s_mac_axis_data_2ff ;
-reg        s_mac_axis_valid_2ff;
-reg        s_mac_axis_last_2ff ;
-reg        s_mac_axis_error_2ff;
 
 reg [11:0] cnt;
 reg [ 7:0] protocol;
@@ -46,22 +42,12 @@ always @(posedge clk ) begin
         s_mac_axis_valid_ff <= 1'd0;
         s_mac_axis_last_ff  <= 1'd0;
         s_mac_axis_error_ff <= 1'd0;
-
-        // s_mac_axis_data_2ff  <= 8'd0;
-        // s_mac_axis_valid_2ff <= 1'd0;
-        // s_mac_axis_last_2ff  <= 1'd0;
-        // s_mac_axis_error_2ff <= 1'd0;
     end
     else begin
         s_mac_axis_data_ff  <= s_mac_axis_data ;
         s_mac_axis_valid_ff <= s_mac_axis_valid;
         s_mac_axis_last_ff  <= s_mac_axis_last ;
         s_mac_axis_error_ff <= s_mac_axis_error;
-
-        // s_mac_axis_data_2ff  <= s_mac_axis_data_ff ;
-        // s_mac_axis_valid_2ff <= s_mac_axis_valid_ff;
-        // s_mac_axis_last_2ff  <= s_mac_axis_last_ff ;
-        // s_mac_axis_error_2ff <= s_mac_axis_error_ff;
     end
 end
 

@@ -292,7 +292,7 @@ always @(posedge clk ) begin
         index <= 8'd0;
     end
     else begin
-        if((curr_state == IDLE) && (next_state == WAIT))begin
+        if((curr_state == IDLE) && (next_state == GRANT))begin
             index <= index + 8'd1;
         end
     end
@@ -306,13 +306,13 @@ always @(posedge clk ) begin
         fcs_protocol  <= 17'd0;
     end
     else begin
-        if((s_ip_axis_valid_ff[0] == 1'b1) && (s_ip_axis_valid_ff[1] == 1'b0))begin
+        if(send_cnt == 5'd1)begin
             fcs_src_ip <= s_ip_src_ip_r[15:0] + s_ip_src_ip_r[31:16];
             fcs_dst_ip <= s_ip_dst_ip_r[15:0] + s_ip_dst_ip_r[31:16];
             fcs_len_index <= index + s_ip_len_r;
             fcs_protocol  <= {8'h40, s_ip_protocol_r};
         end
-        else if((s_ip_axis_valid_ff[1] == 1'b1) && (s_ip_axis_valid_ff[2] == 1'b0))begin
+        else if(send_cnt == 5'd2)begin
             fcs_src_ip <= fcs_src_ip[15:0] + fcs_src_ip[16];
             fcs_dst_ip <= fcs_dst_ip[15:0] + fcs_dst_ip[16];
             fcs_len_index <= fcs_len_index[15:0] + fcs_len_index[16];
@@ -329,19 +329,19 @@ always @(posedge clk ) begin
         if(curr_state == IDLE)begin
             fcs <= 17'h8500;
         end
-        else if((s_ip_axis_valid_ff[2] == 1'b1) && (s_ip_axis_valid_ff[3] == 1'b0))begin
+        else if(send_cnt == 5'd3)begin
             fcs <= fcs[15:0] + fcs_src_ip + fcs[16];
         end
-        else if((s_ip_axis_valid_ff[3] == 1'b1) && (s_ip_axis_valid_ff[4] == 1'b0))begin
+        else if(send_cnt == 5'd4)begin
             fcs <= fcs[15:0] + fcs_dst_ip + fcs[16];
         end
-        else if((s_ip_axis_valid_ff[4] == 1'b1) && (s_ip_axis_valid_ff[5] == 1'b0))begin
+        else if(send_cnt == 5'd5)begin
             fcs <= fcs[15:0] + fcs_len_index + fcs[16];
         end
-        else if((s_ip_axis_valid_ff[5] == 1'b1) && (s_ip_axis_valid_ff[6] == 1'b0))begin
+        else if(send_cnt == 5'd6)begin
             fcs <= fcs[15:0] + fcs_protocol + fcs[16];
         end
-        else if((s_ip_axis_valid_ff[6] == 1'b1) && (s_ip_axis_valid_ff[7] == 1'b0))begin
+        else if(send_cnt == 5'd7)begin
             fcs <= ~(fcs[15:0] + fcs[16]);
         end
     end

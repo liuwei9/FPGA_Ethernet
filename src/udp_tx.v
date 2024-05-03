@@ -61,8 +61,8 @@ reg [31:0] cfg_dst_ip_r      ;
 reg [15:0] cfg_udp_len_r     ;
 
 reg [16:0] fcs;
-reg [ 1:0] fcs_cnt;
-reg [31:0] data_temp;
+reg        fcs_cnt;
+reg [15:0] data_temp;
 
 reg [159:0] check_head;
 
@@ -256,36 +256,30 @@ assign m_ip_req = m_ip_req_r;
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
-        fcs_cnt <= 2'b0;
+        fcs_cnt <= 1'b0;
     end
     else begin
         if((s_udp_axis_valid == 1'b1) && (s_udp_axis_ready == 1'b1))begin
-            fcs_cnt <= fcs_cnt + 2'b1;
+            fcs_cnt <= fcs_cnt + 1'b1;
         end
         else begin
-            fcs_cnt <= 2'b0;
+            fcs_cnt <= 1'b0;
         end
     end
 end
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
-        data_temp <= 32'd0;
+        data_temp <= 16'd0;
     end
     else begin
         if((s_udp_axis_valid == 1'b1) && (s_udp_axis_ready == 1'b1))begin
             case (fcs_cnt)
                 2'd0: begin
-                    data_temp <= {s_udp_axis_data, 24'd0};
+                    data_temp <= {s_udp_axis_data, 8'd0};
                 end 
                 2'd1: begin
-                    data_temp <= {data_temp[31:24], s_udp_axis_data, 16'd0};
-                end 
-                2'd2: begin
-                    data_temp <= {data_temp[31:16], s_udp_axis_data, 8'd0};
-                end 
-                2'd3: begin
-                    data_temp <= {data_temp[31:8], s_udp_axis_data};
+                    data_temp <= {data_temp[15:8], s_udp_axis_data};
                 end 
             endcase
         end
@@ -303,7 +297,7 @@ always @(posedge clk ) begin
         s_udp_axis_fire_last <= 1'b0;
     end
     else begin
-        s_udp_axis_fire <= (s_udp_axis_valid == 1'b1) && (s_udp_axis_ready == 1'b1);
+        s_udp_axis_fire <= (s_udp_axis_valid == 1'b1) && (s_udp_axis_ready == 1'b1) && (fcs_cnt == 1'b1);
         s_udp_axis_fire_last <= (s_udp_axis_valid == 1'b1) && (s_udp_axis_ready == 1'b1) && (s_udp_axis_last == 1'b1);
     end
 end
@@ -315,10 +309,10 @@ always @(posedge clk ) begin
     end
     else begin
         if((curr_state == WAIT) && (wait_cnt == 4'd0))begin
-            check_head <= {cfg_src_ip_r, cfg_dst_ip_r, 8'd0, 8'd17, cfg_udp_len_r, cfg_udp_src_port_r, cfg_udp_dst_port_r, cfg_udp_len_r, 8'd0};
+            check_head <= {cfg_src_ip_r, cfg_dst_ip_r, 8'd0, 8'd17, cfg_udp_len_r, cfg_udp_src_port_r, cfg_udp_dst_port_r, cfg_udp_len_r, 16'd0};
         end
 
-        if(s_udp_axis_fire == 1'b1)begin
+        if((s_udp_axis_fire == 1'b1) || (s_udp_axis_fire_last == 1'b1))begin
             fcs <= fcs[15:0] + data_temp + fcs[16];
         end
         else begin
@@ -330,6 +324,9 @@ always @(posedge clk ) begin
                 if(wait_cnt == 4'd11)begin
                     fcs <= ~(fcs[15:0] + fcs[16]);
                 end
+            end
+            if((m_ip_axis_valid == 1'b1) && (m_ip_axis_last == 1'b1))begin
+                fcs <= 17'd0;
             end
         end
     end

@@ -15,7 +15,7 @@ module crc(
 reg [31:0] lfsr_q,lfsr_c;
 wire [7:0] data_in;
 assign crc_out = lfsr_q;
-assign data_in = {crc_data_in[0], crc_data_in[1], crc_data_in[2], crc_data_in[3], crc_data_in[4], crc_data_in[5], crc_data_in[7], crc_data_in[7]};
+assign data_in = {crc_data_in[0], crc_data_in[1], crc_data_in[2], crc_data_in[3], crc_data_in[4], crc_data_in[5], crc_data_in[6], crc_data_in[7]};
 
 always @(*) begin
     lfsr_c[0] = lfsr_q[24] ^ lfsr_q[30] ^ data_in[0] ^ data_in[6];

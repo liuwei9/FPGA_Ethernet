@@ -256,16 +256,16 @@ always @(posedge clk ) begin
     end
 end
 
-always @(posedge clk ) begin
-    if(rst == 1'b1)begin
-        crc_data <= 31'd0;
-    end
-    else begin
-        if(curr_state == WAIT)begin
-            crc_data <= crc_out;
-        end
-    end
-end
+// always @(posedge clk ) begin
+//     if(rst == 1'b1)begin
+//         crc_data <= 31'd0;
+//     end
+//     else begin
+//         if(curr_state == WAIT)begin
+//             crc_data <= crc_out;
+//         end
+//     end
+// end
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
@@ -310,7 +310,12 @@ always @(posedge clk ) begin
             tx_data  <= tx_pre[63 -: 8];
             tx_valid <= 1'b1;
             tx_pre   <= tx_pre << 4'd8;
-            tx_fcs   <= crc_data;
+            tx_fcs   <= {
+                            ~crc_out[24], ~crc_out[25], ~crc_out[26], ~crc_out[27], ~crc_out[28], ~crc_out[29], ~crc_out[30], ~crc_out[31], 
+                            ~crc_out[16], ~crc_out[17], ~crc_out[18], ~crc_out[19], ~crc_out[20], ~crc_out[21], ~crc_out[22], ~crc_out[23], 
+                            ~crc_out[8], ~crc_out[9], ~crc_out[10], ~crc_out[11], ~crc_out[12], ~crc_out[13], ~crc_out[14], ~crc_out[15], 
+                            ~crc_out[0], ~crc_out[1], ~crc_out[2], ~crc_out[3], ~crc_out[4], ~crc_out[5], ~crc_out[6], ~crc_out[7]                           
+                        };
         end
         else if(curr_state == SEND)begin
             tx_data  <= rdata;
