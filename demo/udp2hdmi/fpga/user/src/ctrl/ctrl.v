@@ -1,10 +1,17 @@
 module ctrl (
-    input       clk         ,
-    input       rst         ,
+    input         clk         ,
+    input         rst         ,
 
-    input [7:0] s_axis_data ,
-    input       s_axis_valid,
-    input       s_axis_last ,
+    input   [7:0] s_axis_data ,
+    input         s_axis_valid,
+    input         s_axis_last ,
+
+    output  [7:0] m_axis_data ,
+    output        m_axis_valid,
+    output        m_axis_last ,
+    output [15:0] m_axis_len  , 
+    output        m_axis_vsync  
+
 );
 
 genvar i;
@@ -24,11 +31,17 @@ reg       s_axis_last_ff  [26:0];
 reg [199:0] head;
 reg         head_check;
 reg         head_ctrl ;
+reg [127:0] tail      ;
+reg         tail_check;
 
 reg [15:0]  img_h         ;
 reg [15:0]  img_w         ;
 reg [31:0]  total_packet  ;
 reg [15:0]  algorithm_ctrl;
+
+reg [31:0] frame_num;
+reg [15:0] frame_len;
+reg [47:0] frame_head;
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
@@ -55,16 +68,26 @@ always @(*) begin
             end
         end
         DATA: begin
-            
+            if((frame_num == total_packet) && (m_axis_last == 1'b1) && (m_axis_valid == 1'b1))begin
+                next_state = TAIL;
+            end
+            else begin
+                next_state = DATA;
+            end
         end
         CTRL: begin
-            
+            next_state = HEAD;
         end
         TAIL: begin
-            
+            if(check_head == 1'b1)begin
+                next_state = HEAD;
+            end
+            else begin
+                next_state = TAIL;
+            end
         end
         default: begin
-            next_state = IDLE;
+            next_state = HEAD;
         end
     endcase
 end
@@ -125,7 +148,69 @@ always @(posedge clk ) begin
             total_packet   <= head[95  -: 32];
             algorithm_ctrl <= head[127 -: 16];
         end
+        else begin
+            if(curr_state != HEAD)begin
+                head_check <= 1'b0;
+            end
+        end
     end
 end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        frame_head <= 48'd0;
+    end
+    else begin
+        if((curr_state == DATA) && (s_axis_valid == 1'b1))begin
+            frame_head <= {frame_head[39:0], s_axis_data};
+        end
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        frame_num <= 32'd0;
+        frame_len <= 16'd0;
+    end
+    else begin
+        if((curr_state == DATA) && (s_axis_valid_ff[6] == 1'b1) && (s_axis_valid_ff[7] == 1'b0))begin
+            frame_num <= frame_head[47 -: 32];
+            frame_len <= frame_head[0 +: 16];
+        end
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        tail <= 128'd0;
+    end
+    else begin
+        if((curr_state == HEAD) && (s_axis_valid == 1'b1))begin
+            tail <= {tail[119:0], s_axis_data};
+        end
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        tail_check <= 1'b1;
+    end
+    else begin
+        if((curr_state == TAIL) && (s_axis_valid_ff[25] == 1'b1))begin
+            tail_check <= tail == 128'h6633_7755_3322_4411_1144_2233_5577_3366; 
+        end
+        else begin
+            if(curr_state != TAIL)begin
+                tail_check <= 1'b0;
+            end
+        end
+    end
+end
+
+assign m_axis_data  = (curr_state == DATA) ? s_axis_data_ff [26] : 8'b0;
+assign m_axis_valid = (curr_state == DATA) ? s_axis_valid_ff[26] : 1'b0;
+assign m_axis_last  = (curr_state == DATA) ? s_axis_last_ff [26] : 1'b0;
+assign m_axis_len   = frame_len;
+assign m_axis_vsync = (curr_state == DATA) ? s_axis_last_ff [26] && (frame_num == 32'd1) : 1'b0;
     
 endmodule
