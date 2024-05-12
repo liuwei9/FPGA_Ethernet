@@ -24,9 +24,9 @@ localparam TAIL = 4'b1000;
 reg [3:0] curr_state;
 reg [3:0] next_state;
 
-reg [7:0] s_axis_data_ff  [26:0];
-reg       s_axis_valid_ff [26:0];
-reg       s_axis_last_ff  [26:0]; 
+reg [7:0]  s_axis_data_ff  [26:0];
+reg [26:0] s_axis_valid_ff ;
+reg [26:0] s_axis_last_ff  ; 
 
 reg [199:0] head;
 reg         head_check;
@@ -55,7 +55,7 @@ end
 always @(*) begin
     case (curr_state)
         HEAD: begin
-            if(check_head == 1'b1)begin
+            if(head_check == 1'b1)begin
                 if(head_ctrl == 1'b0)begin
                     next_state = DATA;
                 end
@@ -79,7 +79,7 @@ always @(*) begin
             next_state = HEAD;
         end
         TAIL: begin
-            if(check_head == 1'b1)begin
+            if(tail_check == 1'b1)begin
                 next_state = HEAD;
             end
             else begin
