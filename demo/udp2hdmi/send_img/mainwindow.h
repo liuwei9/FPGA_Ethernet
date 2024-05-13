@@ -2,6 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QUdpSocket>
+#include <QHostAddress>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -25,5 +27,12 @@ private slots:
 private:
     Ui::MainWindow *ui;
     bool udpIsRun;
+    QHostAddress srcIp;
+    QHostAddress dstIp;
+    qint16 srcPort;
+    qint16 dstPort;
+    QUdpSocket *udpSocket;
+
+    void sendHead(bool isData, int imgH, int imgW, int packetLen);
 };
 #endif // MAINWINDOW_H
