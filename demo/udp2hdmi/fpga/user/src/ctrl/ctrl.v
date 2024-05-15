@@ -2,15 +2,15 @@ module ctrl (
     input         clk         ,
     input         rst         ,
 
-    input   [7:0] s_axis_data ,
-    input         s_axis_valid,
-    input         s_axis_last ,
+    (*mark_debug = "true"*)input   [7:0] s_axis_data ,
+    (*mark_debug = "true"*)input         s_axis_valid,
+    (*mark_debug = "true"*)input         s_axis_last ,
 
-    output  [7:0] m_axis_data ,
-    output        m_axis_valid,
-    output        m_axis_last ,
-    output [15:0] m_axis_len  , 
-    output        m_axis_vsync  
+    (*mark_debug = "true"*)output  [7:0] m_axis_data ,
+    (*mark_debug = "true"*)output        m_axis_valid,
+    (*mark_debug = "true"*)output        m_axis_last ,
+    (*mark_debug = "true"*)output [15:0] m_axis_len  , 
+    (*mark_debug = "true"*)output        m_axis_vsync  
 
 );
 
@@ -100,8 +100,8 @@ always @(posedge clk ) begin
     end
     else begin
         s_axis_data_ff[0] <= s_axis_data;
-        s_axis_valid_ff   <= {s_axis_valid_ff[6:0], s_axis_valid};
-        s_axis_last_ff    <= {s_axis_last_ff [6:0], s_axis_last };
+        s_axis_valid_ff   <= {s_axis_valid_ff[25:0], s_axis_valid};
+        s_axis_last_ff    <= {s_axis_last_ff [25:0], s_axis_last };
     end
 end
 

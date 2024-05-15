@@ -66,10 +66,11 @@ void MainWindow::sendHead(bool isData, int imgH, int imgW, int packetLen)
         QString str_s = QString("7755221133661155");
         QString str_e = QString("5511663311225577");
         QByteArray bt;
-        for(int i = 0; i < str_s.length(); i++){
-            int t = str_s[i].toLatin1() - '0';
+        for(int i = 0; i < str_s.length(); i = i + 2){
+            int t = (str_s[i].toLatin1()) * 16 + str_s[i + 1].toLatin1() - '0';
             bt.append(t);
         }
+        bt.append(1);
 
         char hBytes[2];
         for (int i = 0; i < 2; ++i) {
@@ -91,8 +92,8 @@ void MainWindow::sendHead(bool isData, int imgH, int imgW, int packetLen)
         }
         std::reverse(pBytes, pBytes + 4);
         bt.append(pBytes, 4);
-        for(int i = 0; i < str_e.length(); i++){
-            int t = str_e[i].toLatin1() - '0';
+        for(int i = 0; i < str_e.length(); i = i + 2){
+            int t = (str_e[i].toLatin1()) * 16 + str_e[i + 1].toLatin1() - '0';
             bt.append(t);
         }
         udpSocket->writeDatagram(bt, dstIp, dstPort);

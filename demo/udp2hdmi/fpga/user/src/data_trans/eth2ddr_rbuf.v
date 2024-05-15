@@ -37,8 +37,6 @@ reg [31:0] m_len ;
 
 reg        m_cmd_valid_r;
 
-reg [11:0] r_len;
-
 wire wr_en;
 wire rd_en;
 wire [8:0] din;
