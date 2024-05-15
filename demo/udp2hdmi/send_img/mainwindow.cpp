@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QMessageBox>
+#include <QFileDialog>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -9,11 +10,13 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     this->udpIsRun = false;
+    this->imgIsOpen = false;
     this->udpSocket = nullptr;
     this->ui->srcIP_edit->setText("192.168.1.101");
     this->ui->srcPort_edit->setText("8080");
     this->ui->dstIP_edit->setText("192.168.1.100");
     this->ui->dstPort_edit->setText("8081");
+    this->ui->locolImglabel->setFixedSize(640, 480);
 }
 
 MainWindow::~MainWindow()
@@ -27,13 +30,24 @@ void MainWindow::on_sendBtn_clicked()
         QMessageBox::warning(this, "警告", "udp连接还未建立，请配置IP和端口信息后点击打开按钮");
     }
     else {
-        sendHead(true, 1080, 1920, 100);
+        if(ui->imgBtn->isChecked()){
+            sendHead(true, 1080, 1920, 100);
+        }
+        else {
+            sendHead(false, 1080, 1920, 100);
+        }
+
     }
 }
 
 
 void MainWindow::on_startBtn_clicked()
 {
+    if(imgIsOpen == false){
+        QMessageBox::information(this, "信息", "请先打开一张图片");
+        return;
+    }
+
     if(udpIsRun){
         ui->srcIP_edit->setDisabled(false);
         ui->srcPort_edit->setDisabled(false);
@@ -101,6 +115,40 @@ void MainWindow::sendHead(bool isData, int imgH, int imgW, int packetLen)
     else {
         QString str = "7755221133661155";
         udpSocket->writeDatagram(str.toLatin1(), dstIp, dstPort);
+    }
+}
+
+void MainWindow::sendData(QString filePath)
+{
+
+}
+
+
+void MainWindow::on_loadImgBtn_clicked()
+{
+    QString caption = "选择文件";
+
+    // 设置文件过滤器，例如 "所有文件 (*)"
+    QString filter = "Image files (*.png *.xpm *.jpg *.jpeg *.bmp *.tiff *.gif *.webp)";
+
+    // 获取用户选择的文件URL
+    QString fileUrl = QFileDialog::getOpenFileName(nullptr,
+                                               caption,
+                                               QString("./"),
+                                               filter);
+    // 检查用户是否取消了选择
+    if (!fileUrl.isEmpty()) {
+        QImage image(fileUrl);
+        img = image.copy().convertToFormat(QImage::Format_RGB16);
+        QImage new_img = image.scaled(640, 480);
+        if (image.isNull()) {
+            QMessageBox::warning(this, "警告", "无法打开图片，请检查文件路径");
+        }
+        else {
+            this->imgIsOpen = true;
+            // 设置QLabel的图片
+            ui->locolImglabel->setPixmap(QPixmap::fromImage(new_img));
+        }
     }
 }
 

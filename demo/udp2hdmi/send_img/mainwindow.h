@@ -24,15 +24,20 @@ private slots:
 
     void on_startBtn_clicked();
 
+    void on_loadImgBtn_clicked();
+
 private:
     Ui::MainWindow *ui;
     bool udpIsRun;
+    bool imgIsOpen;
     QHostAddress srcIp;
     QHostAddress dstIp;
     qint16 srcPort;
     qint16 dstPort;
     QUdpSocket *udpSocket;
+    QImage img;
 
     void sendHead(bool isData, int imgH, int imgW, int packetLen);
+    void sendData(QString filePath);
 };
 #endif // MAINWINDOW_H

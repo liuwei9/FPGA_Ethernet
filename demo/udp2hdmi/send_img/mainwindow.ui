@@ -6,9 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>1920</width>
+    <height>1080</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1920</width>
+    <height>1080</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>1920</width>
+    <height>1080</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
@@ -18,7 +30,7 @@
     <property name="geometry">
      <rect>
       <x>320</x>
-      <y>520</y>
+      <y>1040</y>
       <width>75</width>
       <height>23</height>
      </rect>
@@ -31,7 +43,7 @@
     <property name="geometry">
      <rect>
       <x>410</x>
-      <y>520</y>
+      <y>1040</y>
       <width>75</width>
       <height>23</height>
      </rect>
@@ -40,11 +52,11 @@
      <string>打开/关闭</string>
     </property>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>450</y>
+      <y>970</y>
       <width>280</width>
       <height>98</height>
      </rect>
@@ -55,7 +67,7 @@
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <layout class="QVBoxLayout" name="verticalLayout">
          <item>
           <widget class="QLabel" name="srcIP_label">
@@ -69,7 +81,7 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
           <widget class="QLabel" name="srcPort_label">
@@ -126,6 +138,84 @@
       </layout>
      </item>
     </layout>
+   </widget>
+   <widget class="QGroupBox" name="groupBox">
+    <property name="geometry">
+     <rect>
+      <x>540</x>
+      <y>980</y>
+      <width>120</width>
+      <height>80</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>传输协议</string>
+    </property>
+    <widget class="QRadioButton" name="imgBtn">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>30</y>
+       <width>95</width>
+       <height>19</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>图像数据</string>
+     </property>
+    </widget>
+    <widget class="QRadioButton" name="ctrlBtn">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>60</y>
+       <width>95</width>
+       <height>19</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>控制命令</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QLabel" name="locolImglabel">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>90</y>
+      <width>321</width>
+      <height>261</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>32</x>
+      <y>71</y>
+      <width>48</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>本地图片</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="loadImgBtn">
+    <property name="geometry">
+     <rect>
+      <x>390</x>
+      <y>940</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>加载图片</string>
+    </property>
    </widget>
   </widget>
  </widget>
