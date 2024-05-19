@@ -2,15 +2,15 @@ module ctrl (
     input         clk         ,
     input         rst         ,
 
-    (*mark_debug = "true"*)input   [7:0] s_axis_data ,
-    (*mark_debug = "true"*)input         s_axis_valid,
-    (*mark_debug = "true"*)input         s_axis_last ,
+    input   [7:0] s_axis_data ,
+    input         s_axis_valid,
+    input         s_axis_last ,
 
-    (*mark_debug = "true"*)output  [7:0] m_axis_data ,
-    (*mark_debug = "true"*)output        m_axis_valid,
-    (*mark_debug = "true"*)output        m_axis_last ,
-    (*mark_debug = "true"*)output [15:0] m_axis_len  , 
-    (*mark_debug = "true"*)output        m_axis_vsync  
+    output  [7:0] m_axis_data ,
+    output        m_axis_valid,
+    output        m_axis_last ,
+    output [15:0] m_axis_len  , 
+    output        m_axis_vsync  
 
 );
 
@@ -42,6 +42,9 @@ reg [15:0]  algorithm_ctrl;
 reg [31:0] frame_num;
 reg [15:0] frame_len;
 reg [47:0] frame_head;
+reg [ 2:0] data_cnt  ;
+// reg [31:0] num;
+// reg        abnormal;
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
@@ -55,7 +58,7 @@ end
 always @(*) begin
     case (curr_state)
         HEAD: begin
-            if(head_check == 1'b1)begin
+            if((head_check == 1'b1) && (s_axis_last_ff[26] == 1'b1))begin
                 if(head_ctrl == 1'b0)begin
                     next_state = DATA;
                 end
@@ -173,9 +176,47 @@ always @(posedge clk ) begin
         frame_len <= 16'd0;
     end
     else begin
-        if((curr_state == DATA) && (s_axis_valid_ff[6] == 1'b1) && (s_axis_valid_ff[7] == 1'b0))begin
+        if((curr_state == DATA) && (s_axis_valid_ff[5] == 1'b1) && (s_axis_valid_ff[6] == 1'b0))begin
             frame_num <= frame_head[47 -: 32];
             frame_len <= frame_head[0 +: 16];
+        end
+    end
+end
+
+// always @(posedge clk ) begin
+//     if(rst == 1'b1)begin
+//         num <= 32'd0;
+//     end
+//     else begin
+//         if((curr_state == DATA) && (s_axis_valid_ff[7] == 1'b1) && (s_axis_valid_ff[8] == 1'b0))begin
+//             num <= num + 32'd1;
+//         end
+//     end
+// end
+
+// always @(posedge clk ) begin
+//     if(rst == 1'b1)begin
+//         abnormal <= 1'b0;
+//     end
+//     else begin
+//         if((curr_state == DATA) && (s_axis_valid_ff[6] == 1'b1) && (s_axis_valid_ff[7] == 1'b0))begin
+//             abnormal <= abnormal | (frame_num != num);
+//         end
+//     end
+// end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        data_cnt <= 3'd0;
+    end
+    else begin
+        if(s_axis_valid_ff[26] == 1'b1)begin
+            if(data_cnt < 3'd6)begin
+                data_cnt <= data_cnt + 3'd1;
+            end
+        end
+        else begin
+            data_cnt <= 3'd0;
         end
     end
 end
@@ -208,9 +249,9 @@ always @(posedge clk ) begin
 end
 
 assign m_axis_data  = (curr_state == DATA) ? s_axis_data_ff [26] : 8'b0;
-assign m_axis_valid = (curr_state == DATA) ? s_axis_valid_ff[26] : 1'b0;
+assign m_axis_valid = (curr_state == DATA) ? s_axis_valid_ff[26] && (data_cnt == 3'd6) : 1'b0;
 assign m_axis_last  = (curr_state == DATA) ? s_axis_last_ff [26] : 1'b0;
 assign m_axis_len   = frame_len;
-assign m_axis_vsync = (curr_state == DATA) ? s_axis_last_ff [26] && (frame_num == 32'd1) : 1'b0;
+assign m_axis_vsync = (curr_state == DATA) ? s_axis_valid_ff[26] && (data_cnt == 3'd6) && (frame_num == 32'd0) : 1'b0;
     
 endmodule

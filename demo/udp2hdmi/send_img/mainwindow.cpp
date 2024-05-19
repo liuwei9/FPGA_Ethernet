@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QMessageBox>
 #include <QFileDialog>
-
+#include <synchapi.h>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -31,10 +31,11 @@ void MainWindow::on_sendBtn_clicked()
     }
     else {
         if(ui->imgBtn->isChecked()){
-            sendHead(true, 1080, 1920, 100);
+            sendHead(true, 1080, 1920, 2979);
+            sendData();
         }
         else {
-            sendHead(false, 1080, 1920, 100);
+            sendHead(false, 1080, 1920, 2979);
         }
 
     }
@@ -43,10 +44,10 @@ void MainWindow::on_sendBtn_clicked()
 
 void MainWindow::on_startBtn_clicked()
 {
-    if(imgIsOpen == false){
-        QMessageBox::information(this, "信息", "请先打开一张图片");
-        return;
-    }
+    // if(imgIsOpen == false){
+    //     QMessageBox::information(this, "信息", "请先打开一张图片");
+    //     return;
+    // }
 
     if(udpIsRun){
         ui->srcIP_edit->setDisabled(false);
@@ -118,9 +119,45 @@ void MainWindow::sendHead(bool isData, int imgH, int imgW, int packetLen)
     }
 }
 
-void MainWindow::sendData(QString filePath)
+void MainWindow::sendData()
 {
-
+    QByteArray bt;
+    for(int i = 0; i < 2979; i++){
+        // bt.append(i, 4);
+        // bt.append(1392, 2);
+        char indexBytes[4];
+        for (int j = 0; j < 4; ++j) {
+            indexBytes[j] = static_cast<char>((i >> (j * 8)) & 0xFF);
+        }
+        std::reverse(indexBytes, indexBytes + 4);
+        bt.append(indexBytes, 4);
+        char lenBytes[2];
+        for (int j = 0; j < 2; ++j) {
+            lenBytes[j] = static_cast<char>((1392 >> (j * 8)) & 0xFF);
+        }
+        std::reverse(lenBytes, lenBytes + 2);
+        bt.append(lenBytes, 2);
+        char dataBytes[1392];
+        // for (int j = 0; j < 1392; ++j) {
+        //     lenBytes[j] = static_cast<char>((0 >> (j * 8)) & 0xFF);
+        // }
+        bt.append(dataBytes, 1392);
+        // for (int j = 0; j < 1392; ++j) {
+        //     bt.append(j, 1);
+        // }
+        qDebug() << i;
+        udpSocket->writeDatagram(bt, dstIp, dstPort);
+        bt.clear();
+        // Sleep(0.02);
+    }
+    // bt.append(2979, 4);
+    // bt.append(432, 2);
+    // // for (int j = 0; j < 432; ++j) {
+    // //     bt.append(j, 1);
+    // // }
+    // // qDebug() << bt;
+    // udpSocket->writeDatagram(bt, dstIp, dstPort);
+    // bt.clear();
 }
 
 
