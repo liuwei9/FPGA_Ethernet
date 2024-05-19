@@ -1,9 +1,8 @@
 
 module  hdmi_top(
     input        sys_clk    ,
-    input        sys_rst_n  ,
     output       hdmi_clk   ,
-    output       hdmi_rst_n ,
+    output       hdmi_rst   ,
     
     output       tmds_clk_p ,    
     output       tmds_clk_n ,
@@ -46,7 +45,7 @@ clk_wiz_0  clk_wiz_0(
 );
 
 assign hdmi_clk = pixel_clk;
-assign hdmi_rst_n = clk_locked;
+assign hdmi_rst_n = !clk_locked;
 assign vsyns = video_vs;
 
 video_driver u_video_driver(
