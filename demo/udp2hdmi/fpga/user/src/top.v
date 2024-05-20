@@ -24,6 +24,7 @@ module top (
     output        DDR3_0_reset_n   ,
     output        DDR3_0_we_n      ,
 
+    output        hdmi_out_en1     ,
     output        tmds_clk_p       ,
     output        tmds_clk_n       ,
     output [2:0]  tmds_data_p      ,
@@ -48,6 +49,7 @@ wire locked;
 wire rst;
 assign rst = !locked;
 assign phy_rgmii_rst_n = 1'b1;
+assign hdmi_out_en1 = 1'b1;
 
 wire [15:0] cfg_udp_src_port;
 wire [15:0] cfg_udp_dst_port;
@@ -123,6 +125,9 @@ wire                     eth2ddr_m_axi_rready  ;
 
 wire                     hdmi_clk              ;
 wire                     hdmi_rst              ; 
+
+wire [31:0]              hdmi_addr = 32'd0;
+wire [31:0]              hdmi_len  = 32'd4147200; //1080P
 
 wire                     ddr2hdmi_m_cmd_valid  ;
 wire [31:0]              ddr2hdmi_m_cmd_addr   ;
@@ -483,7 +488,6 @@ design_1_wrapper design_1_wrapper_inst
     .S00_AXI_0_arprot  (eth2ddr_m_axi_arprot ),
     .S00_AXI_0_arqos   (),
     .S00_AXI_0_arready (eth2ddr_m_axi_arready),
-    .S00_AXI_0_arregion(),
     .S00_AXI_0_arsize  (eth2ddr_m_axi_arsize ),
     .S00_AXI_0_arvalid (eth2ddr_m_axi_arvalid),
     .S00_AXI_0_awaddr  (eth2ddr_m_axi_awaddr  ),
@@ -493,9 +497,7 @@ design_1_wrapper design_1_wrapper_inst
     .S00_AXI_0_awlen   (eth2ddr_m_axi_awlen   ),
     .S00_AXI_0_awlock  (eth2ddr_m_axi_awlock  ),
     .S00_AXI_0_awprot  (eth2ddr_m_axi_awprot  ),
-    .S00_AXI_0_awqos   (),
     .S00_AXI_0_awready (eth2ddr_m_axi_awready ),
-    .S00_AXI_0_awregion(),
     .S00_AXI_0_awsize  (eth2ddr_m_axi_awsize  ),
     .S00_AXI_0_awvalid (eth2ddr_m_axi_awvalid ),
     .S00_AXI_0_bid     (eth2ddr_m_axi_bid     ),

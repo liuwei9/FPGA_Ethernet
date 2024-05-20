@@ -36,7 +36,7 @@ wire  [23:0]  video_rgb;
 //*****************************************************
 
 
-clk_wiz_0  clk_wiz_0(
+clk_wiz_1  clk_wiz_1_inst(
     .clk_in1        (sys_clk     ),
     .clk_out1       (pixel_clk   ),        
     .clk_out2       (pixel_clk_5x),     

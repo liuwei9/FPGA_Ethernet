@@ -16,17 +16,17 @@ module video_driver(
 //parameter define
 
 // //1920*1080
-// parameter  H_SYNC   =  12'd44;   
-// parameter  H_BACK   =  12'd148;  
-// parameter  H_DISP   =  12'd1920; 
-// parameter  H_FRONT  =  12'd22;  
-// parameter  H_TOTAL  =  12'd2200; 
+ parameter  H_SYNC   =  12'd44;   
+ parameter  H_BACK   =  12'd148;  
+ parameter  H_DISP   =  12'd1920; 
+ parameter  H_FRONT  =  12'd22;  
+ parameter  H_TOTAL  =  12'd2200; 
 
-// parameter  V_SYNC   =  12'd5;    
-// parameter  V_BACK   =  12'd36;  
-// parameter  V_DISP   =  12'd1080; 
-// parameter  V_FRONT  =  12'd4;   
-// parameter  V_TOTAL  =  12'd1125; 
+ parameter  V_SYNC   =  12'd5;    
+ parameter  V_BACK   =  12'd36;  
+ parameter  V_DISP   =  12'd1080; 
+ parameter  V_FRONT  =  12'd4;   
+ parameter  V_TOTAL  =  12'd1125; 
 
 // //640*480
 // parameter  H_SYNC   =  12'd96;   
@@ -42,17 +42,17 @@ module video_driver(
 // parameter  V_TOTAL  =  12'd525; 
 
 // 1280*720*60fps
-parameter  H_SYNC   =  12'd40;   
-parameter  H_BACK   =  12'd220;  
-parameter  H_DISP   =  12'd1280; 
-parameter  H_FRONT  =  12'd110;  
-parameter  H_TOTAL  =  12'd1650; 
+//parameter  H_SYNC   =  12'd40;   
+//parameter  H_BACK   =  12'd220;  
+//parameter  H_DISP   =  12'd1280; 
+//parameter  H_FRONT  =  12'd110;  
+//parameter  H_TOTAL  =  12'd1650; 
 
-parameter  V_SYNC   =  12'd5;    
-parameter  V_BACK   =  12'd20;  
-parameter  V_DISP   =  12'd720; 
-parameter  V_FRONT  =  12'd5;   
-parameter  V_TOTAL  =  12'd750; 
+//parameter  V_SYNC   =  12'd5;    
+//parameter  V_BACK   =  12'd20;  
+//parameter  V_DISP   =  12'd720; 
+//parameter  V_FRONT  =  12'd5;   
+//parameter  V_TOTAL  =  12'd750; 
 
 // //1280*720*30fps
 // parameter  H_SYNC   =  12'd40;   
