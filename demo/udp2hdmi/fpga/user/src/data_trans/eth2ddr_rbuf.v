@@ -2,22 +2,22 @@ module eth2ddr_rbuf (
     input          clk         ,
     input          rst         ,
 
-    input   [7:0]  s_axis_data ,
-    input          s_axis_valid,
-    input          s_axis_last ,
-    input   [31:0] s_axis_addr ,
-    input   [31:0] s_axis_len  ,
+    (*mark_debug = "true"*)input   [7:0]  s_axis_data ,
+    (*mark_debug = "true"*)input          s_axis_valid,
+    (*mark_debug = "true"*)input          s_axis_last ,
+    (*mark_debug = "true"*)input   [31:0] s_axis_addr ,
+    (*mark_debug = "true"*)input   [31:0] s_axis_len  ,
  
-    output         m_cmd_valid ,
-    output  [31:0] m_cmd_addr  ,
-    output  [31:0] m_cmd_len   ,
-    input          m_cmd_ready ,
+    (*mark_debug = "true"*)output         m_cmd_valid ,
+    (*mark_debug = "true"*)output  [31:0] m_cmd_addr  ,
+    (*mark_debug = "true"*)output  [31:0] m_cmd_len   ,
+    (*mark_debug = "true"*)input          m_cmd_ready ,
 
-    output [127:0] m_axis_data ,
-    output [ 15:0] m_axis_keep ,
-    output         m_axis_valid,
-    output         m_axis_last ,
-    input          m_axis_ready
+    (*mark_debug = "true"*)output [127:0] m_axis_data ,
+    (*mark_debug = "true"*)output [ 15:0] m_axis_keep ,
+    (*mark_debug = "true"*)output         m_axis_valid,
+    (*mark_debug = "true"*)output         m_axis_last ,
+    (*mark_debug = "true"*)input          m_axis_ready
 );
 
 localparam IDLE  = 4'b0001;
@@ -25,17 +25,17 @@ localparam WRITE = 4'b0010;
 localparam WAIT  = 4'b0100;
 localparam READ  = 4'b1000;
 
-reg [3:0] curr_state;
+(*mark_debug = "true"*)reg [3:0] curr_state;
 reg [3:0] next_state;
 
-reg [7:0]  s_axis_data_ff ; 
-reg        s_axis_valid_ff;
-reg        s_axis_last_ff ;
+(*mark_debug = "true"*)reg [7:0]  s_axis_data_ff ; 
+(*mark_debug = "true"*)reg        s_axis_valid_ff;
+(*mark_debug = "true"*)reg        s_axis_last_ff ;
 
-reg [31:0] m_addr;
-reg [31:0] m_len ;
+(*mark_debug = "true"*)reg [31:0] m_addr;
+(*mark_debug = "true"*)reg [31:0] m_len ;
 
-reg        m_cmd_valid_r;
+(*mark_debug = "true"*)reg        m_cmd_valid_r;
 
 wire wr_en;
 wire rd_en;
@@ -55,6 +55,8 @@ wire [127 : 0] m_axis_tdata;
 wire [15 : 0] m_axis_tkeep;
 wire m_axis_tlast;
 
+(*mark_debug = "true"*)reg m_cmd_flag;
+
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
         s_axis_data_ff  <= 8'b0;
@@ -71,6 +73,7 @@ end
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
         m_addr <= 32'd0;
+        m_len  <= 32'd0;
     end
     else begin
         if((s_axis_valid == 1'b1) && (s_axis_valid_ff == 1'b0))begin
@@ -101,20 +104,20 @@ always @(*) begin
         end 
         WRITE: begin
             if((s_axis_last_ff == 1'b1) && (s_axis_valid_ff == 1'b1))begin
-                next_state = WAIT;
+                next_state = READ;
             end
             else begin
                 next_state = WRITE;
             end
         end
-        WAIT: begin
-            if((m_cmd_valid == 1'b1) && (m_cmd_ready == 1'b1))begin
-                next_state = READ;
-            end
-            else begin
-                next_state = WAIT;
-            end
-        end
+        // WAIT: begin
+        //     if((m_cmd_valid == 1'b1) && (m_cmd_ready == 1'b1))begin
+        //         next_state = READ;
+        //     end
+        //     else begin
+        //         next_state = WAIT;
+        //     end
+        // end
         READ: begin
             if((m_axis_valid == 1'b1) && (m_axis_ready == 1'b1) && (m_axis_last == 1'b1))begin
                 next_state = IDLE;
@@ -129,6 +132,21 @@ always @(*) begin
     endcase
 end
 
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        m_cmd_flag <= 1'b0;
+    end
+    else begin
+        if((s_axis_valid == 1'b1) && (s_axis_valid_ff == 1'b0) && (m_cmd_flag == 1'b0))begin
+            m_cmd_flag <= 1'b1;
+        end
+        else begin
+            if((m_cmd_valid == 1'b1) && (m_cmd_ready == 1'b1))begin
+                m_cmd_flag <= 1'b0;
+            end
+        end
+    end
+end
 
 
 always @(posedge clk ) begin
@@ -136,7 +154,7 @@ always @(posedge clk ) begin
         m_cmd_valid_r <= 1'b0;
     end
     else begin
-        if((curr_state == WAIT) && (m_cmd_valid_r == 1'b0))begin
+        if((m_cmd_flag == 1'b1) && (m_cmd_valid_r == 1'b0))begin
             m_cmd_valid_r <= 1'b1;
         end
         else begin
@@ -155,7 +173,7 @@ assign din = {s_axis_last, s_axis_data};
 assign wr_en = s_axis_valid;
 
 assign rd_en = (s_axis_tvalid == 1'b1) && (s_axis_tready == 1'b1);
-assign s_axis_tvalid = (curr_state == READ) && (empty == 1'b0);
+assign s_axis_tvalid = (curr_state != IDLE) && (empty == 1'b0);
 assign s_axis_tdata = dout[7:0];
 assign s_axis_tlast = dout[8];
 assign s_axis_tkeep = 1'b1;

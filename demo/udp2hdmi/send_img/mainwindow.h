@@ -38,6 +38,7 @@ private:
     QImage img;
 
     void sendHead(bool isData, int imgH, int imgW, int packetLen);
+    void sendFoot(void);
     void sendData();
 };
 #endif // MAINWINDOW_H

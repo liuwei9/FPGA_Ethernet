@@ -86,25 +86,25 @@ wire         eth2ddr_m_axis_valid;
 wire         eth2ddr_m_axis_last ;
 wire         eth2ddr_m_axis_ready;
 
-wire [0:0]               eth2ddr_m_axi_awid    ;
-wire [31:0]              eth2ddr_m_axi_awaddr  ;
-wire [7:0]               eth2ddr_m_axi_awlen   ;
-wire [2:0]               eth2ddr_m_axi_awsize  ;
-wire [1:0]               eth2ddr_m_axi_awburst ;
-wire                     eth2ddr_m_axi_awlock  ;
-wire [3:0]               eth2ddr_m_axi_awcache ;
-wire [2:0]               eth2ddr_m_axi_awprot  ;
-wire                     eth2ddr_m_axi_awvalid ;
-wire                     eth2ddr_m_axi_awready ;
-wire [127:0]             eth2ddr_m_axi_wdata   ;
-wire [15:0]              eth2ddr_m_axi_wstrb   ;
-wire                     eth2ddr_m_axi_wlast   ;
-wire                     eth2ddr_m_axi_wvalid  ;
-wire                     eth2ddr_m_axi_wready  ;
-wire [0:0]               eth2ddr_m_axi_bid     ;
-wire [1:0]               eth2ddr_m_axi_bresp   ;
-wire                     eth2ddr_m_axi_bvalid  ;
-wire                     eth2ddr_m_axi_bready  ;
+(*mark_debug = "true"*)wire [0:0]               eth2ddr_m_axi_awid    ;
+(*mark_debug = "true"*)wire [31:0]              eth2ddr_m_axi_awaddr  ;
+(*mark_debug = "true"*)wire [7:0]               eth2ddr_m_axi_awlen   ;
+(*mark_debug = "true"*)wire [2:0]               eth2ddr_m_axi_awsize  ;
+(*mark_debug = "true"*)wire [1:0]               eth2ddr_m_axi_awburst ;
+(*mark_debug = "true"*)wire                     eth2ddr_m_axi_awlock  ;
+(*mark_debug = "true"*)wire [3:0]               eth2ddr_m_axi_awcache ;
+(*mark_debug = "true"*)wire [2:0]               eth2ddr_m_axi_awprot  ;
+(*mark_debug = "true"*)wire                     eth2ddr_m_axi_awvalid ;
+(*mark_debug = "true"*)wire                     eth2ddr_m_axi_awready ;
+(*mark_debug = "true"*)wire [127:0]             eth2ddr_m_axi_wdata   ;
+(*mark_debug = "true"*)wire [15:0]              eth2ddr_m_axi_wstrb   ;
+(*mark_debug = "true"*)wire                     eth2ddr_m_axi_wlast   ;
+(*mark_debug = "true"*)wire                     eth2ddr_m_axi_wvalid  ;
+(*mark_debug = "true"*)wire                     eth2ddr_m_axi_wready  ;
+(*mark_debug = "true"*)wire [0:0]               eth2ddr_m_axi_bid     ;
+(*mark_debug = "true"*)wire [1:0]               eth2ddr_m_axi_bresp   ;
+(*mark_debug = "true"*)wire                     eth2ddr_m_axi_bvalid  ;
+(*mark_debug = "true"*)wire                     eth2ddr_m_axi_bready  ;
 
 wire [0:0]               eth2ddr_m_axi_arid    ; 
 wire [31:0]              eth2ddr_m_axi_araddr  ; 
@@ -125,20 +125,25 @@ wire                     eth2ddr_m_axi_rready  ;
 
 wire                     hdmi_clk              ;
 wire                     hdmi_rst              ; 
+wire                     ddr2hdmi_axi_clk      ;     
+wire                     ddr2hdmi_axi_rst      ;     
 
 wire [31:0]              hdmi_addr = 32'd0;
 wire [31:0]              hdmi_len  = 32'd4147200; //1080P
+wire [23:0]              hdmi_data              ;
+wire                     hdmi_ready             ;
+wire                     hdmi_vsync             ;
 
-wire                     ddr2hdmi_m_cmd_valid  ;
-wire [31:0]              ddr2hdmi_m_cmd_addr   ;
-wire [31:0]              ddr2hdmi_m_cmd_len    ;
-wire                     ddr2hdmi_m_cmd_ready  ;
+(*mark_debug = "true"*)wire                     ddr2hdmi_m_cmd_valid  ;
+(*mark_debug = "true"*)wire [31:0]              ddr2hdmi_m_cmd_addr   ;
+(*mark_debug = "true"*)wire [31:0]              ddr2hdmi_m_cmd_len    ;
+(*mark_debug = "true"*)wire                     ddr2hdmi_m_cmd_ready  ;
 
-wire [127:0]             ddr2hdmi_s_axis_data  ;
-wire [15:0]              ddr2hdmi_s_axis_keep  = 16'hFFFF;
-wire                     ddr2hdmi_s_axis_valid ;
-wire                     ddr2hdmi_s_axis_last  ;
-wire                     ddr2hdmi_s_axis_ready ;
+(*mark_debug = "true"*)wire [127:0]             ddr2hdmi_s_axis_data  ;
+(*mark_debug = "true"*)wire [15:0]              ddr2hdmi_s_axis_keep  = 16'hFFFF;
+(*mark_debug = "true"*)wire                     ddr2hdmi_s_axis_valid ;
+(*mark_debug = "true"*)wire                     ddr2hdmi_s_axis_last  ;
+(*mark_debug = "true"*)wire                     ddr2hdmi_s_axis_ready ;
 
 wire [0:0]               ddr2hdmi_m_axi_awid    ;
 wire [31:0]              ddr2hdmi_m_axi_awaddr  ;
@@ -160,28 +165,31 @@ wire [1:0]               ddr2hdmi_m_axi_bresp   ;
 wire                     ddr2hdmi_m_axi_bvalid  ;
 wire                     ddr2hdmi_m_axi_bready  ;
 
-wire [0:0]               ddr2hdmi_m_axi_arid    ; 
-wire [31:0]              ddr2hdmi_m_axi_araddr  ; 
-wire [7:0]               ddr2hdmi_m_axi_arlen   ; 
-wire [2:0]               ddr2hdmi_m_axi_arsize  ; 
-wire [1:0]               ddr2hdmi_m_axi_arburst ; 
-wire                     ddr2hdmi_m_axi_arlock  ; 
-wire [3:0]               ddr2hdmi_m_axi_arcache ; 
-wire [2:0]               ddr2hdmi_m_axi_arprot  ; 
-wire                     ddr2hdmi_m_axi_arvalid ; 
-wire                     ddr2hdmi_m_axi_arready ; 
-wire [0:0]               ddr2hdmi_m_axi_rid     ; 
-wire [127:0]             ddr2hdmi_m_axi_rdata   ; 
-wire [1:0]               ddr2hdmi_m_axi_rresp   ; 
-wire                     ddr2hdmi_m_axi_rlast   ; 
-wire                     ddr2hdmi_m_axi_rvalid  ; 
-wire                     ddr2hdmi_m_axi_rready  ;
+(*mark_debug = "true"*)wire [0:0]               ddr2hdmi_m_axi_arid    ; 
+(*mark_debug = "true"*)wire [31:0]              ddr2hdmi_m_axi_araddr  ; 
+(*mark_debug = "true"*)wire [7:0]               ddr2hdmi_m_axi_arlen   ; 
+(*mark_debug = "true"*)wire [2:0]               ddr2hdmi_m_axi_arsize  ; 
+(*mark_debug = "true"*)wire [1:0]               ddr2hdmi_m_axi_arburst ; 
+(*mark_debug = "true"*)wire                     ddr2hdmi_m_axi_arlock  ; 
+(*mark_debug = "true"*)wire [3:0]               ddr2hdmi_m_axi_arcache ; 
+(*mark_debug = "true"*)wire [2:0]               ddr2hdmi_m_axi_arprot  ; 
+(*mark_debug = "true"*)wire                     ddr2hdmi_m_axi_arvalid ; 
+(*mark_debug = "true"*)wire                     ddr2hdmi_m_axi_arready ; 
+(*mark_debug = "true"*)wire [0:0]               ddr2hdmi_m_axi_rid     ; 
+(*mark_debug = "true"*)wire [127:0]             ddr2hdmi_m_axi_rdata   ; 
+(*mark_debug = "true"*)wire [1:0]               ddr2hdmi_m_axi_rresp   ; 
+(*mark_debug = "true"*)wire                     ddr2hdmi_m_axi_rlast   ; 
+(*mark_debug = "true"*)wire                     ddr2hdmi_m_axi_rvalid  ; 
+(*mark_debug = "true"*)wire                     ddr2hdmi_m_axi_rready  ;
 
 assign cfg_udp_src_port = 16'd8081;
 assign cfg_udp_dst_port = 16'd8080;
 assign cfg_src_ip       = {8'd192, 8'd168, 8'd1, 8'd100};
 assign cfg_dst_ip       = {8'd192, 8'd168, 8'd1, 8'd101};
 assign cfg_src_mac      = 48'h11_22_33_44_55_66;
+
+assign ddr2hdmi_axi_clk = clk_200M;  
+assign ddr2hdmi_axi_rst = !locked ;     
 
 clk_wiz_0 clk_wiz_0_inst(
     // Clock out ports
@@ -276,6 +284,8 @@ eth2ddr eth2ddr_inst(
 ddr2hdmi ddr2hdmi_inst(
     .clk             (hdmi_clk             ),
     .rst             (hdmi_rst             ),
+    .axi_clk         (ddr2hdmi_axi_clk     ),
+    .axi_rst         (ddr2hdmi_axi_rst     ),
     
     .vsync           (hdmi_vsync           ),
     .addr            (hdmi_addr            ),
@@ -389,13 +399,13 @@ axi_dma 	#(
 
 axi_dma 	#(
 
-    .BURST_LEN    (8  ),
+    .BURST_LEN    (64 ),
     .ID_WIDTH     (1  ),
     .DATA_WIDTH   (128),
     .KEEP_WIDTH   (16 ) 
 )ddr2hdmi_dma(
-    .clk                                (hdmi_clk           ),    // Clock
-    .rst                                (hdmi_rst           ),  // Asynchronous reset active high
+    .clk                                (ddr2hdmi_axi_clk   ),    // Clock
+    .rst                                (ddr2hdmi_axi_rst   ),  // Asynchronous reset active high
 
 
     .write_cmd_valid                    (1'b0 ),
@@ -558,8 +568,8 @@ design_1_wrapper design_1_wrapper_inst
     // .sys_clk           (sys_clk               ),
     .eth_clk           (clk_125M              ),
     .eth_rst           (rst                   ),
-    .hdmi_clk          (hdmi_clk              ),
-    .hdmi_rst          (hdmi_rst              )
+    .hdmi_clk          (ddr2hdmi_axi_clk      ),
+    .hdmi_rst          (ddr2hdmi_axi_rst      )
     );
     
 endmodule

@@ -2,15 +2,15 @@ module ctrl (
     input         clk         ,
     input         rst         ,
 
-    input   [7:0] s_axis_data ,
-    input         s_axis_valid,
-    input         s_axis_last ,
+    (*mark_debug = "true"*)input   [7:0] s_axis_data ,
+    (*mark_debug = "true"*)input         s_axis_valid,
+    (*mark_debug = "true"*)input         s_axis_last ,
 
-    output  [7:0] m_axis_data ,
-    output        m_axis_valid,
-    output        m_axis_last ,
-    output [15:0] m_axis_len  , 
-    output        m_axis_vsync  
+    (*mark_debug = "true"*)output  [7:0] m_axis_data ,
+    (*mark_debug = "true"*)output        m_axis_valid,
+    (*mark_debug = "true"*)output        m_axis_last ,
+    (*mark_debug = "true"*)output [15:0] m_axis_len  , 
+    (*mark_debug = "true"*)output        m_axis_vsync  
 
 );
 
@@ -21,28 +21,28 @@ localparam DATA = 4'b0010;
 localparam CTRL = 4'b0100;
 localparam TAIL = 4'b1000;
 
-reg [3:0] curr_state;
+(*mark_debug = "true"*)reg [3:0] curr_state;
 reg [3:0] next_state;
 
-reg [7:0]  s_axis_data_ff  [26:0];
-reg [26:0] s_axis_valid_ff ;
-reg [26:0] s_axis_last_ff  ; 
+(*mark_debug = "true"*)reg [7:0]  s_axis_data_ff  [26:0];
+(*mark_debug = "true"*)reg [26:0] s_axis_valid_ff ;
+(*mark_debug = "true"*)reg [26:0] s_axis_last_ff  ; 
 
-reg [199:0] head;
-reg         head_check;
-reg         head_ctrl ;
-reg [127:0] tail      ;
-reg         tail_check;
+(*mark_debug = "true"*)reg [199:0] head;
+(*mark_debug = "true"*)reg         head_check;
+(*mark_debug = "true"*)reg         head_ctrl ;
+(*mark_debug = "true"*)reg [127:0] tail      ;
+(*mark_debug = "true"*)reg         tail_check;
 
-reg [15:0]  img_h         ;
-reg [15:0]  img_w         ;
-reg [31:0]  total_packet  ;
-reg [15:0]  algorithm_ctrl;
+(*mark_debug = "true"*)reg [15:0]  img_h         ;
+(*mark_debug = "true"*)reg [15:0]  img_w         ;
+(*mark_debug = "true"*)reg [31:0]  total_packet  ;
+(*mark_debug = "true"*)reg [15:0]  algorithm_ctrl;
 
-reg [31:0] frame_num;
-reg [15:0] frame_len;
-reg [47:0] frame_head;
-reg [ 2:0] data_cnt  ;
+(*mark_debug = "true"*)reg [31:0] frame_num;
+(*mark_debug = "true"*)reg [15:0] frame_len;
+(*mark_debug = "true"*)reg [47:0] frame_head;
+(*mark_debug = "true"*)reg [ 2:0] data_cnt  ;
 // reg [31:0] num;
 // reg        abnormal;
 
@@ -226,7 +226,7 @@ always @(posedge clk ) begin
         tail <= 128'd0;
     end
     else begin
-        if((curr_state == HEAD) && (s_axis_valid == 1'b1))begin
+        if((curr_state == TAIL) && (s_axis_valid == 1'b1))begin
             tail <= {tail[119:0], s_axis_data};
         end
     end

@@ -23,7 +23,7 @@ module eth2ddr_ctrl(
 (*mark_debug = "true"*)reg        s_axis_valid_ff;
 (*mark_debug = "true"*)reg        s_axis_last_ff ; 
 (*mark_debug = "true"*)reg [31:0] s_axis_len_ff  ;  
-
+reg [31:0] s_axis_len_mem  ;  
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
@@ -40,7 +40,16 @@ always @(posedge clk ) begin
     end
 end
 
-
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        s_axis_len_mem <= 32'd0;
+    end
+    else begin
+        if((s_axis_valid == 1'b1) && (s_axis_valid_ff == 1'b0))begin
+            s_axis_len_mem <= {16'd0, s_axis_len};
+        end
+    end
+end
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
@@ -52,7 +61,7 @@ always @(posedge clk ) begin
         end
         else begin
             if((s_axis_valid == 1'b1) && (s_axis_valid_ff == 1'b0))begin
-                addr <= addr + s_axis_len;
+                addr <= addr + s_axis_len_mem;
             end
         end
     end

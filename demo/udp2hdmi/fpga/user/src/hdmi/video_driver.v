@@ -113,6 +113,7 @@ assign data_in_ready = (cnt_h > (H_SYNC + H_BACK - 12'd1)) &&
                        (cnt_h < (H_SYNC + H_BACK + H_DISP)) && 
                        (cnt_v > (V_SYNC + V_BACK - 12'd1)) && 
                        (cnt_v < V_SYNC + V_BACK + V_DISP);
+//assign video_rgb = {8'd255, 8'd0, 8'd0};
 assign video_rgb = data_in;
 assign video_de = data_in_ready;
 assign video_vs = cnt_v < V_SYNC ? 1'b0 : 1'b1;
