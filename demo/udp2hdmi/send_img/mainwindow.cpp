@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include<QElapsedTimer>
 #include<QBuffer>
+#include <chrono>
+#include <thread>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -123,6 +125,15 @@ void MainWindow::sendHead(bool isData, int imgH, int imgW, int packetLen)
     }
 }
 
+void MainWindow::delayMicroseconds(double nsecs) {
+    QElapsedTimer timer;
+    timer.start();
+    while (timer.nsecsElapsed() < nsecs) {
+        // 循环直到达到所需的微秒数
+    }
+}
+
+
 void MainWindow::sendData()
 {
     QByteArray bt;
@@ -140,85 +151,27 @@ void MainWindow::sendData()
     // 确保QByteArray足够大以存储所有像素数据
     bt_img.resize(height * width * 2 + 960); // 每个像素占用2个字节
     memcpy(bt_img.data(), bits, height * width * 2);
-    // 复制像素数据到QByteArray
-    // char *byteArrayPtr = bt.data();
-    // for (int y = 0; y < height; ++y) {
-    //     for (int x = 0; x < width; ++x) {
-    //         QRgb pixel = scanLine[x];
-    //         // 将QRgb转换为所需的RGB565格式，并复制到byteArray中
-    //         // 假设QImage::Format_RGB16已经是RGB565格式，否则需要转换
-    //         *reinterpret_cast<quint16*>(byteArrayPtr) = pixel;
-    //         byteArrayPtr += 2; // 移动指针到下一个像素位置
-    //     }
-    //     qDebug() << img.bytesPerLine() / sizeof(QRgb);
-    //     qDebug() << img.bytesPerLine();
-    //     qDebug() << sizeof(QRgb);
-    //     scanLine += img.bytesPerLine() / sizeof(QRgb); // 移动到下一行
-    // }
-
     mstimer.start();
 
     double time_Start = (double)clock();
-    // 最终统计出来是ms
-    // while(k--){
-        for(int i = 0; i < 2980; i++){
-            // bt.append(i, 4);
-            // bt.append(1392, 2);
-            // if(i == 2975){
-            //     char indexBytes[4];
-            //     for (int j = 0; j < 4; ++j) {
-            //         indexBytes[j] = static_cast<char>((2979 >> (j * 8)) & 0xFF);
-            //     }
-            //     std::reverse(indexBytes, indexBytes + 4);
-            //     bt.append(indexBytes, 4);
-            //     char lenBytes[2];
-            //     for (int j = 0; j < 2; ++j) {
-            //         lenBytes[j] = static_cast<char>((432 >> (j * 8)) & 0xFF);
-            //     }
-            //     std::reverse(lenBytes, lenBytes + 2);
-            //     bt.append(lenBytes, 2);
-            //     char dataBytes[432];
-            //     memset(dataBytes, 0, sizeof(dataBytes));
-            //     bt.append(dataBytes, 432);
-            //     // qDebug() << 2979;
-            //     udpSocket->writeDatagram(bt, dstIp, dstPort);
-            //     bt.clear();
-            // }
-            // else
-            // {
-                char indexBytes[4];
-                for (int j = 0; j < 4; ++j) {
-                    indexBytes[j] = static_cast<char>((i >> (j * 8)) & 0xFF);
-                }
-                std::reverse(indexBytes, indexBytes + 4);
-                bt.append(indexBytes, 4);
-                char lenBytes[2];
-                for (int j = 0; j < 2; ++j) {
-                    lenBytes[j] = static_cast<char>((1392 >> (j * 8)) & 0xFF);
-                }
-                std::reverse(lenBytes, lenBytes + 2);
-                bt.append(lenBytes, 2);
-                // char dataBytes[1392];
-                // memset(dataBytes, 0, sizeof(dataBytes));
-                // for (int j = 0; j < 1392; ++j) {
-                //     lenBytes[j] = static_cast<char>((0 >> (j * 8)) & 0xFF);
-                // }
-                // bt.append(dataBytes, 1392);
-                // for (int j = 0; j < 1392; ++j) {
-                //     bt.append(j, 1);
-                // }
-                // qDebug() << i;
-                bt.append(bt_img.mid(i*1392,1392));
-                udpSocket->writeDatagram(bt, dstIp, dstPort);
-                bt.clear();
-            // }
-
-            // usleep(100);
-            // Sleep(1);
-            for (int j = 0; j < 50000; ++j) {
-            }
+    for(int i = 0; i < 2980; i++){
+        char indexBytes[4];
+        for (int j = 0; j < 4; ++j) {
+            indexBytes[j] = static_cast<char>((i >> (j * 8)) & 0xFF);
         }
-    // }
+        std::reverse(indexBytes, indexBytes + 4);
+        bt.append(indexBytes, 4);
+        char lenBytes[2];
+        for (int j = 0; j < 2; ++j) {
+            lenBytes[j] = static_cast<char>((1392 >> (j * 8)) & 0xFF);
+        }
+        std::reverse(lenBytes, lenBytes + 2);
+        bt.append(lenBytes, 2);
+        bt.append(bt_img.mid(i*1392,1392));
+        udpSocket->writeDatagram(bt, dstIp, dstPort);
+        bt.clear();
+        delayMicroseconds(1000*10);
+    }
     double time_End = (double)clock();
 
 
@@ -226,17 +179,6 @@ void MainWindow::sendData()
     qDebug()<<(time_End - time_Start)/1000.0<<"s";
     qDebug() << time;
     qDebug() << "ok";
-
-    // for (int j = 0; j < 100000000; ++j) {
-    // }
-    // bt.append(2979, 4);
-    // bt.append(432, 2);
-    // // for (int j = 0; j < 432; ++j) {
-    // //     bt.append(j, 1);
-    // // }
-    // // qDebug() << bt;
-    // udpSocket->writeDatagram(bt, dstIp, dstPort);
-    // bt.clear();
 }
 
 
@@ -257,6 +199,7 @@ void MainWindow::on_loadImgBtn_clicked()
         QImage image(fileUrl);
         img = image.copy().scaled(1920, 1080).convertToFormat(QImage::Format_RGB16);
         // img = image.copy().scaled(1920, 1080);
+        // img = image.copy().scaled(1920, 1080);
         QImage new_img = image.scaled(640, 480);
         if (image.isNull()) {
             QMessageBox::warning(this, "警告", "无法打开图片，请检查文件路径");
@@ -272,7 +215,7 @@ void MainWindow::on_loadImgBtn_clicked()
 void MainWindow::sendFoot(void)
 {
     QByteArray bt;
-    QString str_s = QString("663377553322441111442233557733666666");
+    QString str_s = QString("66337755332244117733998811446633336644118899337711");
     for(int i = 0; i < str_s.length(); i = i + 2){
         int t = (str_s[i].toLatin1()) * 16 + str_s[i + 1].toLatin1() - '0';
         bt.append(t);

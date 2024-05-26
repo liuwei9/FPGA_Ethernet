@@ -56,6 +56,7 @@ reg [3:0] next_state;
 (*mark_debug = "true"*)wire          empty ;
 
 (*mark_debug = "true"*)reg abnormal ;
+wire [15:0] dout_temp;
 
 always @(posedge axi_clk ) begin
     if(axi_rst == 1'b1)begin
@@ -202,7 +203,8 @@ assign m_cmd_len   =m_cmd_len_r   ;
 assign wr_en = (s_axis_valid == 1'b1) && (s_axis_ready == 1'b1);
 assign s_axis_ready = !full && (curr_state == READ);
 assign rd_en = tx_ready;
-assign tx_data = {dout[15:11], 3'd0, dout[10:5], 2'd0, dout[4:0], 3'd0};
+assign tx_data = {dout_temp[15:11], 3'd0, dout_temp[10:5], 2'd0, dout_temp[4:0], 3'd0};
+assign dout_temp = {dout[7:0], dout[15:8]};
 
 // axis_dwidth_converter_128to16 axis_dwc_128to16_inst (
 //   .aclk(axi_clk),                    // input wire aclk

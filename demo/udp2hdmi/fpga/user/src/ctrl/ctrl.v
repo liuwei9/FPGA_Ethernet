@@ -31,7 +31,7 @@ reg [3:0] next_state;
 (*mark_debug = "true"*)reg [199:0] head;
 (*mark_debug = "true"*)reg         head_check;
 (*mark_debug = "true"*)reg         head_ctrl ;
-(*mark_debug = "true"*)reg [127:0] tail      ;
+(*mark_debug = "true"*)reg [199:0] tail      ;
 (*mark_debug = "true"*)reg         tail_check;
 
 (*mark_debug = "true"*)reg [15:0]  img_h         ;
@@ -129,6 +129,11 @@ always @(posedge clk ) begin
         if((curr_state == HEAD) && (s_axis_valid == 1'b1))begin
             head <= {head[191:0], s_axis_data};
         end
+        else begin
+            if(curr_state != HEAD)begin
+                head <= 200'd0;
+            end
+        end
     end
 end
 
@@ -223,11 +228,16 @@ end
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
-        tail <= 128'd0;
+        tail <= 200'd0;
     end
     else begin
         if((curr_state == TAIL) && (s_axis_valid == 1'b1))begin
-            tail <= {tail[119:0], s_axis_data};
+            tail <= {tail[191:0], s_axis_data};
+        end
+        else begin
+            if(curr_state != TAIL)begin
+                tail <= 200'd0;
+            end
         end
     end
 end
@@ -238,7 +248,7 @@ always @(posedge clk ) begin
     end
     else begin
         if((curr_state == TAIL) && (s_axis_valid_ff[25] == 1'b1))begin
-            tail_check <= tail == 128'h6633_7755_3322_4411_1144_2233_5577_3366; 
+            tail_check <= tail == 200'h6633_7755_3322_4411_7733_9988_1144_6633_3366_4411_8899_3377_11; 
         end
         else begin
             if(curr_state != TAIL)begin

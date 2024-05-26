@@ -40,5 +40,6 @@ private:
     void sendHead(bool isData, int imgH, int imgW, int packetLen);
     void sendFoot(void);
     void sendData();
+    void delayMicroseconds(double microseconds);
 };
 #endif // MAINWINDOW_H

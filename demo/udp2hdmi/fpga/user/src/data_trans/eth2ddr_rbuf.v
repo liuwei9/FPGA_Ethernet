@@ -54,6 +54,8 @@ wire m_axis_tready;
 wire [127 : 0] m_axis_tdata;
 wire [15 : 0] m_axis_tkeep;
 wire m_axis_tlast;
+reg  [127:0] m_axis_data_temp;
+integer i;
 
 (*mark_debug = "true"*)reg m_cmd_flag;
 
@@ -165,6 +167,12 @@ always @(posedge clk ) begin
     end
 end
 
+always @(*) begin
+    for ( i = 0; i < 16; i = i + 1) begin : SWAP
+        m_axis_data_temp[i * 8 +: 8] = m_axis_tdata[(15 - i) * 8 +: 8];
+    end
+end
+
 assign m_cmd_valid = m_cmd_valid_r;
 assign m_cmd_addr  = m_addr       ;
 assign m_cmd_len   = m_len        ;
@@ -173,13 +181,13 @@ assign din = {s_axis_last, s_axis_data};
 assign wr_en = s_axis_valid;
 
 assign rd_en = (s_axis_tvalid == 1'b1) && (s_axis_tready == 1'b1);
-assign s_axis_tvalid = (curr_state != IDLE) && (empty == 1'b0);
+assign s_axis_tvalid = (curr_state != IDLE) && (empty == 1'b0) && (m_cmd_flag == 1'b0);
 assign s_axis_tdata = dout[7:0];
 assign s_axis_tlast = dout[8];
 assign s_axis_tkeep = 1'b1;
 
 assign m_axis_tready = m_axis_ready;
-assign m_axis_data = m_axis_tdata;
+assign m_axis_data = m_axis_data_temp;
 assign m_axis_valid = m_axis_tvalid;
 assign m_axis_last = m_axis_tlast;
 assign m_axis_keep = m_axis_tkeep;

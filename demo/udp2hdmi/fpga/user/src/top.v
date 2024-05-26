@@ -324,7 +324,7 @@ hdmi_top hdmi_top_inst(
 
 axi_dma 	#(
 
-    .BURST_LEN    (8  ),
+    .BURST_LEN    (64 ),
     .ID_WIDTH     (1  ),
     .DATA_WIDTH   (128),
     .KEEP_WIDTH   (16 ) 
