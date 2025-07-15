@@ -29,6 +29,8 @@ reg [11:0] cnt;
 reg [ 7:0] protocol;
 reg [31:0] dst_ip;
 reg        valid_flag;
+reg [11:0] ip_head_len;
+reg [11:0] data_len;
 
 reg [ 7:0] m_ip_protocol_r  ;  
 reg [ 7:0] m_ip_axis_data_r ; 
@@ -67,6 +69,31 @@ end
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
+        ip_head_len <= 12'd0;
+    end
+    else begin
+        if((s_mac_axis_valid == 1'b1) && (cnt == 12'd0))begin
+            ip_head_len <= {6'd0, s_mac_axis_data[3:0], 2'd0};
+        end
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        data_len <= 12'd0;
+    end
+    else begin
+        if((s_mac_axis_valid == 1'b1) && (cnt == 12'd2))begin
+            data_len[11:8] <= s_mac_axis_data[3:0];
+        end
+        else if((s_mac_axis_valid == 1'b1) && (cnt == 12'd3))begin
+            data_len[7:0] <= s_mac_axis_data;
+        end
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
         protocol <= 8'd0;
     end
     else begin
@@ -92,11 +119,11 @@ always @(posedge clk ) begin
         valid_flag <= 1'b0;
     end
     else begin
-        if((cnt == 12'd20) && (dst_ip == cfg_ip))begin
+        if((cnt >= 12'd20) && (dst_ip == cfg_ip) && (cnt == ip_head_len))begin
             valid_flag <= 1'b1;
         end
         else begin
-            if((s_mac_axis_valid_ff == 1'b0) || ((s_mac_axis_valid_ff == 1'b1) && (s_mac_axis_last_ff == 1'b1)))begin
+            if((s_mac_axis_valid_ff == 1'b0) || ((s_mac_axis_valid_ff == 1'b1) && (s_mac_axis_last_ff == 1'b1)) || (cnt == data_len))begin
                 valid_flag <= 1'b0;
             end
         end
@@ -116,7 +143,7 @@ always @(posedge clk ) begin
             m_ip_protocol_r   <= protocol            ;
             m_ip_axis_data_r  <= s_mac_axis_data_ff ;
             m_ip_axis_valid_r <= s_mac_axis_valid_ff;
-            m_ip_axis_last_r  <= s_mac_axis_last_ff ;
+            m_ip_axis_last_r  <= s_mac_axis_last_ff || (cnt == data_len);
             m_ip_axis_error_r <= s_mac_axis_error_ff;
         end
         else begin
