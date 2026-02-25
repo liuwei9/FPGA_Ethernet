@@ -80,6 +80,10 @@ reg [16:0] fcs_protocol;
 
 reg [ 7:0] index;
 reg [ 4:0] send_cnt;
+reg [ 4:0] padding_cnt;
+reg [ 4:0] padding_num;
+reg        padding_valid;
+reg        padding_last ;
 
 reg [159:0] data_temp;
 
@@ -278,11 +282,13 @@ always @(posedge clk ) begin
     if(rst == 1'b1)begin
         s_ip_protocol_r <=  8'd0;
         s_ip_len_r      <= 16'd0;      
+        padding_num     <=  5'd0;
     end
     else begin
         if((s_udp_ip_axis_valid == 1'b1) && (s_ip_axis_valid_ff[0] == 1'b0))begin
             s_ip_protocol_r <= UDP;
             s_ip_len_r      <= s_udp_ip_axis_len + 16'd20;
+            padding_num     <= 5'd26 - s_udp_ip_axis_len;
         end
     end
 end
@@ -409,10 +415,41 @@ always @(posedge clk ) begin
             m_mac_axis_last_r  <= 1'd0;
         end
         else begin
-            m_mac_axis_data_r  <= s_ip_axis_data_ff [23];
-            m_mac_axis_valid_r <= s_ip_axis_valid_ff[23];
-            m_mac_axis_last_r  <= s_ip_axis_last_ff [23];
+            m_mac_axis_data_r  <= padding_valid ? 8'd0 : s_ip_axis_data_ff [23];
+            m_mac_axis_valid_r <= s_ip_axis_valid_ff[23] | padding_valid;
+            m_mac_axis_last_r  <= (s_ip_axis_last_ff [23] & (~(|padding_num))) | padding_last;
         end
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        padding_cnt   <= 5'd0;
+        padding_valid <= 1'b0;
+    end
+    else begin
+        if(s_ip_axis_last_ff[23] & (|padding_num))begin
+            padding_cnt   <= 5'd1;
+            padding_valid <= 1'b1;
+        end
+        else begin
+            if((padding_cnt >= 5'd1) && (padding_cnt < padding_num))begin
+                padding_cnt <= padding_cnt + 5'd1;
+            end
+            else begin
+                padding_cnt   <= 5'd0;
+                padding_valid <= 1'b0;
+            end
+        end
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        padding_last <= 1'b0;
+    end
+    else begin
+        padding_last <= padding_cnt == (padding_num - 5'd1);
     end
 end
 
