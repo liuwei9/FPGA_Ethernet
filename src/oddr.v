@@ -30,7 +30,20 @@ generate
                 );
             end
             else if(IDDR_PRIM == "IODDRE1")begin
-                
+                ODDRE1 #(
+                    .IS_C_INVERTED(1'b0),           // Optional inversion for C
+                    .IS_D1_INVERTED(1'b0),          // Unsupported, do not use
+                    .IS_D2_INVERTED(1'b0),          // Unsupported, do not use
+                    .SIM_DEVICE("ULTRASCALE_PLUS"), // Set the device version for simulation functionality (ULTRASCALE,
+                                                    // ULTRASCALE_PLUS, ULTRASCALE_PLUS_ES1, ULTRASCALE_PLUS_ES2)
+                    .SRVAL(1'b0)                    // Initializes the ODDRE1 Flip-Flops to the specified value (1'b0, 1'b1)
+                ) ODDRE1_inst (
+                   .Q(q[i]),   // 1-bit output: Data output to IOB
+                   .C(clk),   // 1-bit input: High-speed clock input
+                   .D1(d1[i]), // 1-bit input: Parallel data input 1
+                   .D2(d2[i]), // 1-bit input: Parallel data input 2
+                   .SR(1'b0 )  // 1-bit input: Active-High Async Reset
+                );
             end
         end      
     end

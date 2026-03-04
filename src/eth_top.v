@@ -1,3 +1,7 @@
+/*
+IDDR_PRIM: IODDR, IODDRE1   IODDR for A7,K7,V7   IODDRE1 for ku,kup,vu,vup
+*/
+
 module eth_top #(
     parameter CLOCK_BUFF = "BUFG"       ,
     parameter DEVICE     = "XILINX"     ,

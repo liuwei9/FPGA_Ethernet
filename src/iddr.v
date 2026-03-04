@@ -67,7 +67,19 @@ generate
                 );           
             end
             else if(IDDR_PRIM == "IODDRE1")begin
-                
+                IDDRE1 #(
+                    .DDR_CLK_EDGE("SAME_EDGE_PIPELINED"), // IDDRE1 mode (OPPOSITE_EDGE, SAME_EDGE, SAME_EDGE_PIPELINED)
+                    .IS_CB_INVERTED(1'b0),          // Optional inversion for CB
+                    .IS_C_INVERTED(1'b0)            // Optional inversion for C
+                )
+                IDDRE1_inst (
+                    .Q1(q1[i]), // 1-bit output: Registered parallel output 1
+                    .Q2(q2[i]), // 1-bit output: Registered parallel output 2
+                    .C(rgmii_rxc_buf),   // 1-bit input: High-speed clock
+                    .CB(~rgmii_rxc_buf), // 1-bit input: Inversion of High-speed clock C
+                    .D(delay_data[i]),   // 1-bit input: Serial Data Input
+                    .R(1'b0)    // 1-bit input: Active-High Async Reset
+                );
             end
         end      
     end
