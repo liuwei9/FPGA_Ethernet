@@ -77,7 +77,7 @@ generate
                     .Q2(q2[i]), // 1-bit output: Registered parallel output 2
                     .C(rgmii_rxc_buf),   // 1-bit input: High-speed clock
                     .CB(~rgmii_rxc_buf), // 1-bit input: Inversion of High-speed clock C
-                    .D(delay_data[i]),   // 1-bit input: Serial Data Input
+                    .D(d[i]),   // 1-bit input: Serial Data Input
                     .R(1'b0)    // 1-bit input: Active-High Async Reset
                 );
             end
