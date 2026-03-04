@@ -19,12 +19,15 @@ reg        phy_rgmii_ctl_r ;
 reg  [3:0] phy_rgmii_data_r;
 wire       rgmii_ctl_r ; 
 wire [3:0] rgmii_data_r;
+assign mac_gmii_clk = clk;
+
+wire ref_clk;
 generate
     if(CLK_90 == "TRUE")begin
-        assign mac_gmii_clk = clk_90;
+        assign ref_clk = clk_90;
     end
     else begin
-        assign mac_gmii_clk = clk;
+        assign ref_clk = clk;
     end
 endgenerate
 
@@ -46,13 +49,25 @@ generate
         oddr #(
             .DEVICE     (DEVICE   ),
             .IDDR_PRIM  (IDDR_PRIM),
-            .DATA_WIDTH (6        )
+            .DATA_WIDTH (5        )
         ) oddr_inst (
-            .clk        (mac_gmii_clk),
-            .d1         ({mac_gmii_data[3:0], mac_gmii_dv, 1'b1}),
-            .d2         ({mac_gmii_data[7:4], mac_gmii_dv, 1'b0}),
+            .clk        (mac_gmii_clk                     ),
+            .d1         ({mac_gmii_data[3:0], mac_gmii_dv}),
+            .d2         ({mac_gmii_data[7:4], mac_gmii_dv}),
         
-            .q          ({rgmii_data_r, rgmii_ctl_r, phy_rgmii_clk}  ) 
+            .q          ({rgmii_data_r, rgmii_ctl_r}      ) 
+        );
+
+        oddr #(
+            .DEVICE     (DEVICE   ),
+            .IDDR_PRIM  (IDDR_PRIM),
+            .DATA_WIDTH (1        )
+        ) oddr_clk_inst (
+            .clk        (ref_clk      ),
+            .d1         (1'b1         ),
+            .d2         (1'b0         ),
+        
+            .q          (phy_rgmii_clk) 
         );
     end
 endgenerate
