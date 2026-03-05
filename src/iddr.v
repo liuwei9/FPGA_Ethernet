@@ -21,14 +21,14 @@ generate
           .I            (clk),      // 1-bit input: Clock input
           .O            (rgmii_rxc_buf) // 1-bit output: Clock output
         );  
-        (* IODELAY_GROUP = "rgmii_rx_delay" *) 
-        IDELAYCTRL  IDELAYCTRL_inst (
-            .RDY(),                      // 1-bit output: Ready output
-            .REFCLK(clk_200M),         // 1-bit input: Reference clock input
-            .RST(1'b0)                   // 1-bit input: Active high reset input
-        );
         for (i = 0; i < DATA_WIDTH ; i = i + 1) begin
             if(IDDR_PRIM == "IODDR")begin     
+                (* IODELAY_GROUP = "rgmii_rx_delay" *) 
+                IDELAYCTRL  IDELAYCTRL_inst (
+                    .RDY(),                      // 1-bit output: Ready output
+                    .REFCLK(clk_200M),         // 1-bit input: Reference clock input
+                    .RST(1'b0)                   // 1-bit input: Active high reset input
+                );
                 //rgmii_rx_ctrl输入延时与双沿采�?
                 (* IODELAY_GROUP = "rgmii_rx_delay" *) 
                 IDELAYE2 #(
