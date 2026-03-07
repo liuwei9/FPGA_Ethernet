@@ -26,16 +26,15 @@ module udp_tx (
 
 );
 
-localparam IDLE  = 7'b0000001;
-localparam WRITE = 7'b0000010;
-localparam WAIT  = 7'b0000100;
-localparam REQ   = 7'b0001000;
-localparam READY = 7'b0010000;
-localparam HEAD  = 7'b0100000;
-localparam READ  = 7'b1000000;
+localparam IDLE  = 6'b00_0001;
+localparam WAIT  = 6'b00_0010;
+localparam REQ   = 6'b00_0100;
+localparam READY = 6'b00_1000;
+localparam HEAD  = 6'b01_0000;
+localparam READ  = 6'b10_0000;
 
-reg [6:0] curr_state;
-reg [6:0] next_state;
+reg [5:0] curr_state;
+reg [5:0] next_state;
 
 wire [ 7:0] wdata;
 wire        wen  ;
@@ -49,7 +48,6 @@ reg         r_last;
 
 reg  [ 3:0] wait_cnt;
 
-reg         s_udp_axis_valid_ff;
 
 reg         s_udp_axis_fire;
 reg         s_udp_axis_fire_last;
@@ -84,14 +82,6 @@ reg [31:0] m_ip_dst_ip_r;
 
 reg        m_ip_req_r;
 
-always @(posedge clk ) begin
-    if(rst == 1'b1)begin
-        s_udp_axis_valid_ff <= 1'b0;
-    end
-    else begin
-        s_udp_axis_valid_ff <= s_udp_axis_valid;
-    end
-end
 
 always @(posedge clk ) begin
     if((s_udp_axis_valid == 1'b1) && (curr_state == IDLE))begin
@@ -116,21 +106,13 @@ end
 always @(*) begin
     case (curr_state)
         IDLE: begin
-            if(s_udp_axis_valid == 1'b1)begin
-                next_state = WRITE;
+            if(s_udp_axis_valid & s_udp_axis_last)begin
+                next_state = WAIT;
             end
             else begin
                 next_state = IDLE;
             end
         end 
-        WRITE: begin
-            if((s_udp_axis_valid == 1'b1) && (s_udp_axis_last == 1'b1))begin
-                next_state = WAIT;
-            end
-            else begin
-                next_state = WRITE;
-            end
-        end
         WAIT: begin
             if(wait_cnt == 4'b1111)begin
                 next_state =REQ;
@@ -141,7 +123,7 @@ always @(*) begin
         end
         REQ: begin
             if((m_ip_req_r == 1'b1) && (m_ip_grant == 1'b1))begin
-                next_state =HEAD;
+                next_state = READY;
             end
             else begin
                 next_state = REQ;
@@ -193,7 +175,7 @@ end
 
 assign wen = s_udp_axis_valid;
 assign wdata = s_udp_axis_data;
-assign s_udp_axis_ready = (curr_state == IDLE) || (curr_state == WRITE);
+assign s_udp_axis_ready = curr_state == IDLE;
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
         waddr <= 11'd0;
