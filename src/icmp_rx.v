@@ -2,6 +2,7 @@ module icmp_rx (
     input         clk              ,
     input         rst              ,
 
+    input  [31:0] s_ip_axis_src_ip ,
     input  [ 7:0] s_ip_axis_data   ,
     input         s_ip_axis_valid  ,
     input         s_ip_axis_last   ,
@@ -10,9 +11,10 @@ module icmp_rx (
     output [ 7:0] m_icmp_axis_data ,
     output [15:0] m_icmp_axis_id   ,
     output [15:0] m_icmp_axis_seq  ,
+    output [31:0] m_icmp_axis_ip   ,
     output        m_icmp_axis_valid,
     output        m_icmp_axis_last ,
-    input         m_icmp_axis_ready,
+    input         m_icmp_axis_ready
 );
 
 localparam IDLE = 2'b01;
@@ -32,6 +34,7 @@ reg [2:0] cnt ;
 
 reg [15:0] id ;
 reg [15:0] seq;
+reg [31:0] ip ;
 
 reg req_nvalid;
 reg data_valid;
@@ -147,19 +150,26 @@ always @(posedge clk ) begin
 end
 
 always @(posedge clk ) begin
-    if(s_ip_axis_valid_ff)begin
-        if(cnt == 3'd6)begin
-            seq[15:8] <= s_ip_axis_data_ff;
+    if(s_ip_axis_valid)begin
+        if(cnt == 3'd5)begin
+            seq[15:8] <= s_ip_axis_data;
         end
-        else if(cnt == 3'd7)begin
-            seq[ 7:0] <= s_ip_axis_data_ff;
+        else if(cnt == 3'd6)begin
+            seq[ 7:0] <= s_ip_axis_data;
         end
+    end
+end
+
+always @(posedge clk ) begin
+    if(s_ip_axis_valid_ff & (cnt == 3'd1))begin
+        ip <= s_ip_axis_src_ip;
     end
 end
 
 assign m_icmp_axis_data  = s_ip_axis_data_ff;
 assign m_icmp_axis_id    = id ;
 assign m_icmp_axis_seq   = seq;
+assign m_icmp_axis_ip    = ip ;
 assign m_icmp_axis_valid = s_ip_axis_valid_ff & data_valid;
 assign m_icmp_axis_last  = s_ip_axis_last_ff;
 

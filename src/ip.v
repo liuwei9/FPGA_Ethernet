@@ -49,16 +49,19 @@ localparam ICMP = 8'd1 ;
 localparam TCP  = 8'd6 ;
 localparam UDP  = 8'd17;
 
+wire [31:0] m_ip_src_ip    ;
 wire [ 7:0] m_ip_protocol  ;
 wire [ 7:0] m_ip_axis_data ;
 wire        m_ip_axis_valid;
 wire        m_ip_axis_last ;
 wire        m_ip_axis_error;
 
-reg [ 7:0] m_ip_axis_data_ff  ;
-reg        m_ip_axis_last_ff  ;
-reg        m_ip_axis_error_ff ;
-reg        m_ip_udp_axis_valid;
+reg [31:0] m_ip_src_ip_ff      ;
+reg [ 7:0] m_ip_axis_data_ff   ;
+reg        m_ip_axis_last_ff   ;
+reg        m_ip_axis_error_ff  ;
+reg        m_ip_udp_axis_valid ;
+reg        m_ip_icmp_axis_valid;
 
 wire [7:0]  s_udp_ip_axis_data ;
 wire        s_udp_ip_axis_valid;
@@ -70,18 +73,32 @@ wire        s_udp_ip_grant     ;
 wire [31:0] s_udp_ip_src_ip    ;
 wire [31:0] s_udp_ip_dst_ip    ;
 
+wire [7:0]  s_icmp_ip_axis_data ;
+wire        s_icmp_ip_axis_valid;
+wire        s_icmp_ip_axis_last ;
+wire [15:0] s_icmp_ip_axis_len  ;
+wire        s_icmp_ip_axis_ready;
+wire        s_icmp_ip_req       ;
+wire        s_icmp_ip_grant     ;
+wire [31:0] s_icmp_ip_src_ip    ;
+wire [31:0] s_icmp_ip_dst_ip    ;
+
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
-        m_ip_axis_data_ff   <= 8'b0;
-        m_ip_axis_last_ff   <= 1'b0;
-        m_ip_axis_error_ff  <= 1'b0;
-        m_ip_udp_axis_valid <= 1'b0;
+        m_ip_src_ip_ff       <= 32'd0;
+        m_ip_axis_data_ff    <=  8'b0;
+        m_ip_axis_last_ff    <=  1'b0;
+        m_ip_axis_error_ff   <=  1'b0;
+        m_ip_udp_axis_valid  <=  1'b0;
+        m_ip_icmp_axis_valid <=  1'b0;
     end
     else begin
-        m_ip_axis_data_ff   <= m_ip_axis_data ;
-        m_ip_axis_last_ff   <= m_ip_axis_last ;
-        m_ip_axis_error_ff  <= m_ip_axis_error;
-        m_ip_udp_axis_valid <= m_ip_axis_valid && (m_ip_protocol == UDP);
+        m_ip_src_ip_ff       <= m_ip_src_ip    ;
+        m_ip_axis_data_ff    <= m_ip_axis_data ;
+        m_ip_axis_last_ff    <= m_ip_axis_last ;
+        m_ip_axis_error_ff   <= m_ip_axis_error;
+        m_ip_udp_axis_valid  <= m_ip_axis_valid && (m_ip_protocol == UDP );
+        m_ip_icmp_axis_valid <= m_ip_axis_valid && (m_ip_protocol == ICMP);
     end
 end
 
@@ -99,6 +116,7 @@ ip_rx ip_rx_inst(
     .s_mac_axis_last  (s_mac_axis_last ),
     .s_mac_axis_error (s_mac_axis_error),
 
+    .m_ip_src_ip      (m_ip_src_ip     ),
     .m_ip_protocol    (m_ip_protocol   ),
     .m_ip_axis_data   (m_ip_axis_data  ),
     .m_ip_axis_valid  (m_ip_axis_valid ),
@@ -122,6 +140,17 @@ ip_tx ip_tx_inst(
     .s_udp_ip_axis_last    (s_udp_ip_axis_last    ),
     .s_udp_ip_axis_len     (s_udp_ip_axis_len     ),
     .s_udp_ip_axis_ready   (s_udp_ip_axis_ready   ),
+
+    .s_icmp_ip_req         (s_icmp_ip_req         ),
+    .s_icmp_ip_grant       (s_icmp_ip_grant       ),
+    .s_icmp_ip_src_ip      (s_icmp_ip_src_ip      ),
+    .s_icmp_ip_dst_ip      (s_icmp_ip_dst_ip      ),
+
+    .s_icmp_ip_axis_data   (s_icmp_ip_axis_data   ),
+    .s_icmp_ip_axis_valid  (s_icmp_ip_axis_valid  ),
+    .s_icmp_ip_axis_last   (s_icmp_ip_axis_last   ),
+    .s_icmp_ip_axis_len    (s_icmp_ip_axis_len    ),
+    .s_icmp_ip_axis_ready  (s_icmp_ip_axis_ready  ),
 
     .m_mac_src_mac         (m_mac_src_mac         ),
     .m_mac_dst_mac         (m_mac_dst_mac         ),
@@ -176,6 +205,31 @@ udp udp_inst(
     .m_udp_axis_valid (m_udp_axis_valid   ),
     .m_udp_axis_last  (m_udp_axis_last    ),
     .m_udp_axis_error (m_udp_axis_error   )
+);
+
+icmp icmp_inst(
+    .clk              (clk                 ),
+    .rst              (rst                 ),
+
+    .cfg_src_ip       (cfg_src_ip          ),
+
+    .s_ip_axis_src_ip (m_ip_src_ip_ff      ),
+    .s_ip_axis_data   (m_ip_axis_data_ff   ),
+    .s_ip_axis_valid  (m_ip_icmp_axis_valid),
+    .s_ip_axis_last   (m_ip_axis_last_ff   ),
+    .s_ip_axis_error  (m_ip_axis_error_ff  ),
+
+    .m_ip_axis_data   (s_icmp_ip_axis_data ),
+    .m_ip_axis_valid  (s_icmp_ip_axis_valid),
+    .m_ip_axis_last   (s_icmp_ip_axis_last ),
+    .m_ip_axis_len    (s_icmp_ip_axis_len  ),
+    .m_ip_axis_ready  (s_icmp_ip_axis_ready),
+
+    .m_ip_req         (s_icmp_ip_req       ),
+    .m_ip_grant       (s_icmp_ip_grant     ),
+    .m_ip_src_ip      (s_icmp_ip_src_ip    ),
+    .m_ip_dst_ip      (s_icmp_ip_dst_ip    )
+
 );
     
 endmodule

@@ -15,6 +15,17 @@ module ip_tx (
     input  [15:0] s_udp_ip_axis_len     ,
     output        s_udp_ip_axis_ready   ,
 
+    input         s_icmp_ip_req         ,
+    output        s_icmp_ip_grant       ,
+    input  [31:0] s_icmp_ip_src_ip      ,
+    input  [31:0] s_icmp_ip_dst_ip      ,
+
+    input  [ 7:0] s_icmp_ip_axis_data   ,
+    input         s_icmp_ip_axis_valid  ,
+    input         s_icmp_ip_axis_last   ,
+    input  [15:0] s_icmp_ip_axis_len    ,
+    output        s_icmp_ip_axis_ready  ,
+
     output [47:0] m_mac_src_mac         ,
     output [47:0] m_mac_dst_mac         ,
     output [15:0] m_mac_op_len          ,
@@ -41,14 +52,16 @@ localparam UDP  = 8'd17;
 
 genvar i;
 
-localparam IDLE     = 5'b00001;
-localparam GRANT    = 5'b00010;
-localparam UDP_MAC  = 5'b00100;
-localparam UDP_DATA = 5'b01000;
-localparam WAIT     = 5'b10000;
+localparam IDLE      = 7'b000_0001;
+localparam GRANT     = 7'b000_0010;
+localparam UDP_MAC   = 7'b000_0100;
+localparam UDP_DATA  = 7'b000_1000;
+localparam ICMP_MAC  = 7'b001_0000;
+localparam ICMP_DATA = 7'b010_0000;
+localparam WAIT      = 7'b100_0000;
 
-reg [4:0] curr_state;
-reg [4:0] next_state;
+reg [6:0] curr_state;
+reg [6:0] next_state;
 
 reg m_mac_req_r;
 
@@ -60,7 +73,8 @@ wire [REQ_NUM - 1:0] grant   ;
 reg        m_arp_query_valid_r ;
 reg [31:0] m_arp_query_ip_r    ;
 
-reg        s_udp_ip_axis_ready_r;
+reg        s_udp_ip_axis_ready_r ;
+reg        s_icmp_ip_axis_ready_r;
 
 reg [ 7:0] s_ip_axis_data_ff [23:0]; 
 reg [23:0] s_ip_axis_valid_ff      ;
@@ -94,7 +108,7 @@ reg [ 7:0] m_mac_axis_data_r ;
 reg        m_mac_axis_valid_r;
 reg        m_mac_axis_last_r ; 
 
-assign req = (curr_state == IDLE) ? s_udp_ip_req : 1'b0;
+assign req = (curr_state == IDLE) ? {s_icmp_ip_req, s_udp_ip_req} : 2'b0;
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
@@ -120,7 +134,12 @@ always @(*)begin
                 next_state = UDP_MAC;
             end
             else begin
-                next_state = UDP_MAC;
+                if(grant_ff[1] == 1'b1)begin
+                    next_state = ICMP_MAC;
+                end
+                else begin
+                    next_state = GRANT;
+                end            
             end         
         end
         UDP_MAC: begin
@@ -139,14 +158,30 @@ always @(*)begin
                 next_state = UDP_DATA;
             end
         end
+        ICMP_MAC: begin
+            if((s_arp_query_resp_valid == 1'b1) && (s_arp_query_resp_ip == s_ip_dst_ip_r))begin
+                next_state = WAIT;
+            end
+            else begin
+                next_state = ICMP_MAC;
+            end
+        end
+        ICMP_DATA: begin
+            if((m_mac_axis_last == 1'b1) && (m_mac_axis_valid == 1'b1))begin
+                next_state = IDLE;
+            end
+            else begin
+                next_state = ICMP_DATA;
+            end
+        end
         WAIT: begin
             if(m_mac_grant == 1'b1)begin
                 if(grant_ff[0] == 1'b1)begin
                     next_state = UDP_DATA;
                 end
                 else begin
-                    next_state = UDP_DATA;
-                end 
+                    next_state = ICMP_DATA;           
+                end       
             end
             else begin
                 next_state = WAIT;
@@ -175,6 +210,24 @@ always @(posedge clk ) begin
 end
 
 assign s_udp_ip_axis_ready = s_udp_ip_axis_ready_r & m_mac_axis_ready;
+
+assign s_icmp_ip_grant = (m_mac_grant == 1'b1) && (grant_ff[1] == 1'b1);
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
+        s_icmp_ip_axis_ready_r <= 1'b1;
+    end
+    else begin
+        if(curr_state == ICMP_DATA)begin
+            s_icmp_ip_axis_ready_r <= m_mac_axis_ready;
+        end
+        else begin
+            s_icmp_ip_axis_ready_r <= 1'b0;
+        end
+    end
+end
+
+assign s_icmp_ip_axis_ready = s_icmp_ip_axis_ready_r & m_mac_axis_ready;
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
@@ -223,6 +276,10 @@ always @(posedge clk ) begin
             s_ip_src_ip_r   <= s_udp_ip_src_ip;
             s_ip_dst_ip_r   <= s_udp_ip_dst_ip;
         end
+        else if(grant_ff[1] == 1'b1)begin
+            s_ip_src_ip_r   <= s_icmp_ip_src_ip;
+            s_ip_dst_ip_r   <= s_icmp_ip_dst_ip;
+        end
     end
 end
 
@@ -232,10 +289,14 @@ always @(posedge clk ) begin
         m_arp_query_ip_r    <= 31'b0;
     end
     else begin
-        if((curr_state == GRANT) && (next_state == UDP_MAC))begin
+        if((curr_state == GRANT) && ((next_state == UDP_MAC) || (next_state == ICMP_MAC)))begin
             if(grant_ff[0] == 1'b1)begin
                 m_arp_query_valid_r <=  1'b1;
                 m_arp_query_ip_r    <= s_udp_ip_dst_ip;
+            end
+            else if(grant_ff[1] == 1'b1)begin
+                m_arp_query_valid_r <=  1'b1;
+                m_arp_query_ip_r    <= s_icmp_ip_dst_ip;
             end
         end
         else begin
@@ -243,6 +304,12 @@ always @(posedge clk ) begin
                 if((s_arp_query_resp_valid == 1'b1) && (s_arp_query_resp_ip != s_ip_dst_ip_r))begin
                     m_arp_query_valid_r <=  1'b1;
                     m_arp_query_ip_r    <= s_udp_ip_dst_ip;
+                end
+            end
+            if(curr_state == ICMP_MAC)begin
+                if((s_arp_query_resp_valid == 1'b1) && (s_arp_query_resp_ip != s_ip_dst_ip_r))begin
+                    m_arp_query_valid_r <=  1'b1;
+                    m_arp_query_ip_r    <= s_icmp_ip_dst_ip;
                 end
             end
             if((m_arp_query_valid == 1'b1) && (m_arp_query_ready == 1'b1))begin
@@ -266,6 +333,11 @@ always @(posedge clk ) begin
             s_ip_axis_data_ff[0] <= s_udp_ip_axis_data ;
             s_ip_axis_valid_ff   <= {s_ip_axis_valid_ff[22:0], s_udp_ip_axis_valid};
             s_ip_axis_last_ff    <= {s_ip_axis_last_ff [22:0], s_udp_ip_axis_last };
+        end
+        else if(curr_state == ICMP_DATA)begin
+            s_ip_axis_data_ff[0] <= s_icmp_ip_axis_data ;
+            s_ip_axis_valid_ff   <= {s_ip_axis_valid_ff[22:0], s_icmp_ip_axis_valid};
+            s_ip_axis_last_ff    <= {s_ip_axis_last_ff [22:0], s_icmp_ip_axis_last };
         end      
     end
 end
@@ -288,7 +360,22 @@ always @(posedge clk ) begin
         if((s_udp_ip_axis_valid == 1'b1) && (s_ip_axis_valid_ff[0] == 1'b0))begin
             s_ip_protocol_r <= UDP;
             s_ip_len_r      <= s_udp_ip_axis_len + 16'd20;
-            padding_num     <= 5'd26 - s_udp_ip_axis_len;
+            if(s_udp_ip_axis_len < 5'd26)begin
+                padding_num     <= 5'd26 - s_udp_ip_axis_len;
+            end 
+            else begin
+                padding_num     <= 5'd0;
+            end           
+        end
+        else if((s_icmp_ip_axis_valid == 1'b1) && (s_ip_axis_valid_ff[0] == 1'b0))begin
+            s_ip_protocol_r <= ICMP;
+            s_ip_len_r      <= s_icmp_ip_axis_len + 16'd20;
+            if(s_icmp_ip_axis_len < 5'd26)begin
+                padding_num     <= 5'd26 - s_icmp_ip_axis_len;
+            end    
+            else begin
+                padding_num     <= 5'd0;
+            end         
         end
     end
 end

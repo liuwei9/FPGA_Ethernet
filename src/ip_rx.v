@@ -12,6 +12,7 @@ module ip_rx (
     input         s_mac_axis_last  ,
     input         s_mac_axis_error ,
 
+    output [31:0] m_ip_src_ip      ,
     output [ 7:0] m_ip_protocol    ,
     output [ 7:0] m_ip_axis_data   ,
     output        m_ip_axis_valid  ,
@@ -28,6 +29,7 @@ reg        s_mac_axis_error_ff;
 reg [11:0] cnt;
 reg [ 7:0] protocol;
 reg [31:0] dst_ip;
+reg [31:0] src_ip;
 reg        valid_flag;
 reg [11:0] ip_head_len;
 reg [11:0] data_len;
@@ -105,6 +107,17 @@ end
 
 always @(posedge clk ) begin
     if(rst == 1'b1)begin
+        src_ip <= 32'd0;
+    end
+    else begin
+        if((s_mac_axis_valid == 1'b1) && ((cnt >= 12'd12) && (cnt <= 12'd15)))begin
+            src_ip <= {src_ip[24:0], s_mac_axis_data};
+        end
+    end
+end
+
+always @(posedge clk ) begin
+    if(rst == 1'b1)begin
         dst_ip <= 32'd0;
     end
     else begin
@@ -156,7 +169,7 @@ always @(posedge clk ) begin
     end
 end
 
-
+assign m_ip_src_ip     = src_ip           ;
 assign m_ip_protocol   = m_ip_protocol_r  ;
 assign m_ip_axis_data  = m_ip_axis_data_r ;
 assign m_ip_axis_valid = m_ip_axis_valid_r;
